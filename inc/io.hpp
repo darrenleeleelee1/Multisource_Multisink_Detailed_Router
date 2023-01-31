@@ -46,14 +46,23 @@ void readLayout(Layout *layout, char const *file_path)
             }
             else if(tokens[0] == "Net_num"){
                 layout->num_of_nets = stoi(tokens[1]);
-                Net tmp_net;
-                getline(in_file, line), tokenLine(tokens, line);
-                tmp_net.id = stoi(tokens[1]);
-                getline(in_file, line), tokenLine(tokens, line);
-                tmp_net.num_of_pins = stoi(tokens[1]);
-                for(int i = 0; i < tmp_net.num_of_pins; i++){
-                    getline(in_file, line), tokenLine(tokens, line);
-                    tmp_net.addPin(stoi(tokens[0]), stoi(tokens[1]), stoi(tokens[2]));
+                for(int i = 0; i < layout->num_of_nets; i++){
+                    Net tmp_net;
+                    while(getline(in_file, line)){
+                        tokenLine(tokens, line);
+                        if(tokens.size() == static_cast<unsigned int>(2) && tokens[0] == "Net_id") break;
+                    }
+                    tmp_net.id = stoi(tokens[1]);
+                    while(getline(in_file, line)){
+                        tokenLine(tokens, line);
+                        if(tokens.size() == static_cast<unsigned int>(2) && tokens[0] == "pin_num") break;
+                    }
+                    tmp_net.num_of_pins = stoi(tokens[1]);
+                    for(int j = 0; j < tmp_net.num_of_pins; j++){
+                        getline(in_file, line), tokenLine(tokens, line);
+                        tmp_net.addPin(stoi(tokens[0]), stoi(tokens[1]), stoi(tokens[2]));
+                    }
+                    layout->addNet(tmp_net);
                 }
             }
             else if(tokens[0] == "Via_cost"){
