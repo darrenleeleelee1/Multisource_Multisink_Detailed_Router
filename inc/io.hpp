@@ -37,16 +37,16 @@ void readLayout(Layout *layout, char const *file_path)
                 layout->num_of_layers = stoi(tokens[1]);
             }
             else if(tokens[0] == "Obstacle_num"){
-                layout->num_of_obstacles = stoi(tokens[1]);
-                for(int i = 0; i < layout->num_of_obstacles; i++){
-                    getline(in_file, line), tokenLine(tokens, line);
-                    layout->addObstacle(stoi(tokens[0]), stoi(tokens[1]), stoi(tokens[2])
-                                        , stoi(tokens[3]), stoi(tokens[4]), stoi(tokens[5]));
+                layout->obstacles.resize(stoi(tokens[1]));
+                for(unsigned i = 0; i < layout->obstacles.size(); i++){
+                    getline(in_file, line); tokenLine(tokens, line);
+                    layout->obstacles.at(i) = Obstacle{stoi(tokens[0]), stoi(tokens[1]), stoi(tokens[2])
+                                        , stoi(tokens[3]), stoi(tokens[4]), stoi(tokens[5])};
                 }
             }
             else if(tokens[0] == "Net_num"){
-                layout->num_of_nets = stoi(tokens[1]);
-                for(int i = 0; i < layout->num_of_nets; i++){
+                layout->netlist.resize(stoi(tokens[1]));
+                for(unsigned i = 0; i < layout->netlist.size(); i++){
                     Net tmp_net;
                     while(getline(in_file, line)){
                         tokenLine(tokens, line);
@@ -57,12 +57,12 @@ void readLayout(Layout *layout, char const *file_path)
                         tokenLine(tokens, line);
                         if(tokens.size() == static_cast<unsigned int>(2) && tokens[0] == "pin_num") break;
                     }
-                    tmp_net.num_of_pins = stoi(tokens[1]);
-                    for(int j = 0; j < tmp_net.num_of_pins; j++){
-                        getline(in_file, line), tokenLine(tokens, line);
-                        tmp_net.addPin(stoi(tokens[0]), stoi(tokens[1]), stoi(tokens[2]));
+                    tmp_net.pins.resize(stoi(tokens[1]));
+                    for(unsigned j = 0; j < tmp_net.pins.size(); j++){
+                        getline(in_file, line); tokenLine(tokens, line);
+                        tmp_net.pins.at(j) = Coordinate3D{stoi(tokens[0]), stoi(tokens[1]), stoi(tokens[2])};
                     }
-                    layout->addNet(tmp_net);
+                    layout->netlist.at(i) = tmp_net;
                 }
             }
             else if(tokens[0] == "Via_cost"){
@@ -83,18 +83,37 @@ void writeLayout(Layout *layout, char const *file_path)
     out_file << "Width " << layout->width << "\n";
     out_file << "Height " << layout->height << "\n";
     out_file << "Layer " << layout->num_of_layers << "\n";
-    out_file << "Obstacle_num " << layout->num_of_obstacles << "\n";
-    for(int i = 0; i < layout->num_of_obstacles; i++){
-        out_file << layout->obstacles.at(i).start_point.x << " " << layout->obstacles.at(i).start_point.y << " " << layout->obstacles.at(i).start_point.z; 
+    out_file << "Total_WL " << layout->getWirelength() << "\n";
+    out_file << "Obstacle_num " << layout->obstacles.size() << "\n";
+    for(unsigned i = 0; i < layout->obstacles.size(); i++){
+        out_file << layout->obstacles.at(i).start_point.x << " " << layout->obstacles.at(i).start_point.y << " " << layout->obstacles.at(i).start_point.z << " "; 
         out_file << layout->obstacles.at(i).end_point.x << " " << layout->obstacles.at(i).end_point.y << " " << layout->obstacles.at(i).end_point.z;
         out_file << "\n";
     }
-    out_file << "Net_num " << layout->num_of_nets << "\n";
-    for(int i = 0; i < layout->num_of_nets; i++){
+    out_file << "Net_num " << layout->netlist.size() << "\n";
+    for(unsigned i = 0; i < layout->netlist.size(); i++){
         out_file << "Net_id " << layout->netlist.at(i).id << "\n";
-        out_file << "pin_num " << layout->netlist.at(i).num_of_pins << "\n";
-        for(int j = 0; j < layout->netlist.at(i).num_of_pins; j++){
+        out_file << "pin_num " << layout->netlist.at(i).pins.size() << "\n";
+        for(unsigned j = 0; j < layout->netlist.at(i).pins.size(); j++){
             out_file << layout->netlist.at(i).pins.at(j).x << " " << layout->netlist.at(i).pins.at(j).y << " " << layout->netlist.at(i).pins.at(j).z << "\n";
+        }
+        out_file << "Via_num " << layout->netlist.at(i).vialist.size() << "\n";
+        for(unsigned j = 0; j < layout->netlist.at(i).vialist.size(); j++){
+            out_file << layout->netlist.at(i).vialist.at(j).x << " " << layout->netlist.at(i).vialist.at(j).y << "\n";
+        }
+        out_file << "H_segment_num " << layout->netlist.at(i).horizontal_segments.size() << "\n";
+        for(unsigned j = 0; j < layout->netlist.at(i).horizontal_segments.size(); j++){
+            out_file << layout->netlist.at(i).horizontal_segments.at(j).start_point.x << " " << layout->netlist.at(i).horizontal_segments.at(j).start_point.y 
+                    << " " << layout->netlist.at(i).horizontal_segments.at(j).start_point.z << " ";
+            out_file << layout->netlist.at(i).horizontal_segments.at(j).end_point.x << " " << layout->netlist.at(i).horizontal_segments.at(j).end_point.y 
+                    << " " << layout->netlist.at(i).horizontal_segments.at(j).end_point.z << "\n";
+        }
+        out_file << "V_segment_num " << layout->netlist.at(i).vertical_segments.size() << "\n";
+        for(unsigned j = 0; j < layout->netlist.at(i).vertical_segments.size(); j++){
+            out_file << layout->netlist.at(i).vertical_segments.at(j).start_point.x << " " << layout->netlist.at(i).vertical_segments.at(j).start_point.y 
+                    << " " << layout->netlist.at(i).vertical_segments.at(j).start_point.z << " ";
+            out_file << layout->netlist.at(i).vertical_segments.at(j).end_point.x << " " << layout->netlist.at(i).vertical_segments.at(j).end_point.y 
+                    << " " << layout->netlist.at(i).vertical_segments.at(j).end_point.z << "\n";
         }
     }
 }
