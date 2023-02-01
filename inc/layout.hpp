@@ -39,13 +39,17 @@ public:
 	std::vector<Segment> vertical_segments;
 
 	Net(){
+		id = -1;
 		this->pins.resize(0);
 		this->vialist.resize(0);
 		this->horizontal_segments.resize(0);
 		this->vertical_segments.resize(0);
 	}
 	Net(int _id) : id(_id){
-		Net();
+		this->pins.resize(0);
+		this->vialist.resize(0);
+		this->horizontal_segments.resize(0);
+		this->vertical_segments.resize(0);
 	}
 	~Net(){}
 
