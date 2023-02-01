@@ -1,0 +1,33 @@
+name: C++ CI
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up GCC
+      uses: actions/setup-gcc@v1
+      with:
+        version: 9
+
+    - name: Create obj directory
+      uses: mkdir ${{ github.workspace }}/obj 
+
+    - name: Build Router
+      run:  make -j4
+
+    - name: Run Router
+      run:  |
+        for i in {0..9}; do 
+        ${{ github.workspace }}/router ${{ github.workspace }}/case/test$i.txt ${{ github.workspace }}/out/test$i.txt
+        done
+    - name: Verify output
+      run:  python3 ${{ github.workspace }}/visual.py --dir ./out/

@@ -120,3 +120,4 @@ for count, file in enumerate(file_list):
         plt.title(f"{file_name} WL = {wl}")
         plt.savefig(f"./{args.dir}/{file_name}.png", dpi=300)
         plt.close(fig)
+        print(f"Success create ./{args.dir}/{file_name}.png")
