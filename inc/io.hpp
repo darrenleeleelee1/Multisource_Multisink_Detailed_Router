@@ -94,7 +94,7 @@ void writeLayout(Layout *layout, char const *file_path)
         out_file << "Net_id " << layout->netlist.at(i).id << "\n";
         out_file << "pin_num " << layout->netlist.at(i).num_of_pins << "\n";
         for(int j = 0; j < layout->netlist.at(i).num_of_pins; j++){
-            out_file << layout->netlist.at(i).pins.at(j).x << " " << layout->netlist.at(i).pins.at(j).y << layout->netlist.at(i).pins.at(j).z << "\n";
+            out_file << layout->netlist.at(i).pins.at(j).x << " " << layout->netlist.at(i).pins.at(j).y << " " << layout->netlist.at(i).pins.at(j).z << "\n";
         }
     }
 }
