@@ -19,7 +19,7 @@ jobs:
         version: 9
 
     - name: Create obj directory
-      uses: mkdir ${{ github.workspace }}/obj 
+      run: mkdir ${{ github.workspace }}/obj 
 
     - name: Build Router
       run:  make -j4
