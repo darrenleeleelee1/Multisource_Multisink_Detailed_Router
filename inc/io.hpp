@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -40,8 +41,12 @@ void readLayout(Layout *layout, char const *file_path)
                 layout->obstacles.resize(stoi(tokens[1]));
                 for(unsigned i = 0; i < layout->obstacles.size(); i++){
                     getline(in_file, line); tokenLine(tokens, line);
-                    layout->obstacles.at(i) = Obstacle{stoi(tokens[0]), stoi(tokens[1]), stoi(tokens[2])
-                                        , stoi(tokens[3]), stoi(tokens[4]), stoi(tokens[5])};
+                    if(stoi(tokens[2]) == 0)
+                        layout->obstacles.at(i) = Obstacle{stoi(tokens[0]), stoi(tokens[1]), stoi(tokens[2])
+                                        , stoi(tokens[3]), stoi(tokens[4]) - 1, stoi(tokens[5])};
+                    else
+                        layout->obstacles.at(i) = Obstacle{stoi(tokens[0]), stoi(tokens[1]), stoi(tokens[2])
+                                        , stoi(tokens[3]) - 1, stoi(tokens[4]), stoi(tokens[5])};
                 }
             }
             else if(tokens[0] == "Net_num"){
@@ -86,8 +91,11 @@ void writeLayout(Layout *layout, char const *file_path)
     out_file << "Total_WL " << layout->getWirelength() << "\n";
     out_file << "Obstacle_num " << layout->obstacles.size() << "\n";
     for(unsigned i = 0; i < layout->obstacles.size(); i++){
-        out_file << layout->obstacles.at(i).start_point.x << " " << layout->obstacles.at(i).start_point.y << " " << layout->obstacles.at(i).start_point.z << " "; 
-        out_file << layout->obstacles.at(i).end_point.x << " " << layout->obstacles.at(i).end_point.y << " " << layout->obstacles.at(i).end_point.z;
+        out_file << layout->obstacles.at(i).start_point.x << " " << layout->obstacles.at(i).start_point.y << " " << layout->obstacles.at(i).start_point.z << " ";
+        if(layout->obstacles.at(i).start_point.z == 0)
+            out_file << layout->obstacles.at(i).end_point.x << " " << layout->obstacles.at(i).end_point.y + 1<< " " << layout->obstacles.at(i).end_point.z;
+        else
+            out_file << layout->obstacles.at(i).end_point.x + 1 << " " << layout->obstacles.at(i).end_point.y<< " " << layout->obstacles.at(i).end_point.z;
         out_file << "\n";
     }
     out_file << "Net_num " << layout->netlist.size() << "\n";
@@ -105,14 +113,14 @@ void writeLayout(Layout *layout, char const *file_path)
         for(unsigned j = 0; j < layout->netlist.at(i).horizontal_segments.size(); j++){
             out_file << layout->netlist.at(i).horizontal_segments.at(j).start_point.x << " " << layout->netlist.at(i).horizontal_segments.at(j).start_point.y 
                     << " " << layout->netlist.at(i).horizontal_segments.at(j).start_point.z << " ";
-            out_file << layout->netlist.at(i).horizontal_segments.at(j).end_point.x << " " << layout->netlist.at(i).horizontal_segments.at(j).end_point.y 
+            out_file << layout->netlist.at(i).horizontal_segments.at(j).end_point.x << " " << layout->netlist.at(i).horizontal_segments.at(j).end_point.y + 1
                     << " " << layout->netlist.at(i).horizontal_segments.at(j).end_point.z << "\n";
         }
         out_file << "V_segment_num " << layout->netlist.at(i).vertical_segments.size() << "\n";
         for(unsigned j = 0; j < layout->netlist.at(i).vertical_segments.size(); j++){
             out_file << layout->netlist.at(i).vertical_segments.at(j).start_point.x << " " << layout->netlist.at(i).vertical_segments.at(j).start_point.y 
                     << " " << layout->netlist.at(i).vertical_segments.at(j).start_point.z << " ";
-            out_file << layout->netlist.at(i).vertical_segments.at(j).end_point.x << " " << layout->netlist.at(i).vertical_segments.at(j).end_point.y 
+            out_file << layout->netlist.at(i).vertical_segments.at(j).end_point.x + 1 << " " << layout->netlist.at(i).vertical_segments.at(j).end_point.y 
                     << " " << layout->netlist.at(i).vertical_segments.at(j).end_point.z << "\n";
         }
     }

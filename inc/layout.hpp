@@ -1,3 +1,4 @@
+#pragma once
 #include <vector>
 class Coordinate3D{
 public:
