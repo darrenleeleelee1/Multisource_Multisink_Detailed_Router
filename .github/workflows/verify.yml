@@ -10,26 +10,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: checkout code
       uses: actions/checkout@v2
-
+    
+    - name: load dependecy
+      run : pip3 install -r ${{ github.workspace }}/requirements.txt
+    
     - name: show dependency
       run: |
           echo "gcc path: $(which gcc)"
           echo "gcc version: $(gcc --version)"
           echo "python3 path: $(which python3)"
           echo "python3 version: $(python3 --version)"
-          
-    - name: Create obj directory
+
+    - name: create obj directory
       run: mkdir ${{ github.workspace }}/obj 
 
-    - name: Build Router
+    - name: build Router
       run:  make -j4
 
-    - name: Run Router
+    - name: run Router
       run:  |
         for i in {0..9}; do 
         ${{ github.workspace }}/router ${{ github.workspace }}/case/test$i.txt ${{ github.workspace }}/out/test$i.txt
         done
-    - name: Verify output
+
+    - name: verify output
       run:  python3 ${{ github.workspace }}/visual.py --dir ./out/
