@@ -1,3 +1,4 @@
+#pragma once
 #include "layout.hpp"
 class DetailedLayout : public Layout
 {
