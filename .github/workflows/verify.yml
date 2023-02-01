@@ -13,11 +13,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Set up GCC
-      uses: actions/setup-gcc@v1
-      with:
-        version: 9
-
+    - name: show dependency
+      run: |
+          echo "gcc path: $(which gcc)"
+          echo "gcc version: $(gcc --version)"
+          echo "python3 path: $(which python3)"
+          echo "python3 version: $(python3 --version)"
+          
     - name: Create obj directory
       run: mkdir ${{ github.workspace }}/obj 
 
