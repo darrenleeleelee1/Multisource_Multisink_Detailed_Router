@@ -24,6 +24,8 @@ public:
 };
 class Segment{
 public:
+	// If end_point == 0, means this segment is horizontal, sp.y == ep.y && sp.z == ep.z == 0
+	// else if end_point == 1, means this segment is vertical, sp.x == ep.x && sp.z == ep.z == 1
 	Coordinate3D start_point, end_point;
 	Segment(){}
 	Segment(int _spx, int  _spy, int  _spz, int _epx, int  _epy, int  _epz)
@@ -32,13 +34,15 @@ public:
 };
 class Net{
 public:
+	// For Input
 	int id;
 	std::vector<Coordinate3D> pins;
-
+	// For Ouput
 	std::vector<Coordinate2D> vialist;
 	std::vector<Segment> horizontal_segments;
 	std::vector<Segment> vertical_segments;
-
+	// For Router
+	std::vector<std::pair<int, int>> two_pins;
 	Net(){
 		id = -1;
 		this->pins.resize(0);
@@ -58,12 +62,15 @@ public:
 		// TODO compute the wirelength
 		return 0;
 	}
+
+	void rmst_kruskal(int via_cost, int horizontal_segments_cost, int vertical_segment_cost);
 };
 class Layout{
 public:
+	// For Input
 	int width, height;
 	int num_of_layers = 2;
-	int via_cost = 1;
+	int via_cost = 10;
 	int horizontal_segment_cost = 1, vertical_segment_cost = 1;
 	std::vector<Obstacle> obstacles;
 	std::vector<Net> netlist;

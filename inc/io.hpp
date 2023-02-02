@@ -113,14 +113,14 @@ void writeLayout(Layout *layout, char const *file_path)
         for(unsigned j = 0; j < layout->netlist.at(i).horizontal_segments.size(); j++){
             out_file << layout->netlist.at(i).horizontal_segments.at(j).start_point.x << " " << layout->netlist.at(i).horizontal_segments.at(j).start_point.y 
                     << " " << layout->netlist.at(i).horizontal_segments.at(j).start_point.z << " ";
-            out_file << layout->netlist.at(i).horizontal_segments.at(j).end_point.x << " " << layout->netlist.at(i).horizontal_segments.at(j).end_point.y + 1
+            out_file << layout->netlist.at(i).horizontal_segments.at(j).end_point.x + 1 << " " << layout->netlist.at(i).horizontal_segments.at(j).end_point.y + 1
                     << " " << layout->netlist.at(i).horizontal_segments.at(j).end_point.z << "\n";
         }
         out_file << "V_segment_num " << layout->netlist.at(i).vertical_segments.size() << "\n";
         for(unsigned j = 0; j < layout->netlist.at(i).vertical_segments.size(); j++){
             out_file << layout->netlist.at(i).vertical_segments.at(j).start_point.x << " " << layout->netlist.at(i).vertical_segments.at(j).start_point.y 
                     << " " << layout->netlist.at(i).vertical_segments.at(j).start_point.z << " ";
-            out_file << layout->netlist.at(i).vertical_segments.at(j).end_point.x + 1 << " " << layout->netlist.at(i).vertical_segments.at(j).end_point.y 
+            out_file << layout->netlist.at(i).vertical_segments.at(j).end_point.x + 1 << " " << layout->netlist.at(i).vertical_segments.at(j).end_point.y + 1
                     << " " << layout->netlist.at(i).vertical_segments.at(j).end_point.z << "\n";
         }
     }
