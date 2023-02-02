@@ -60,7 +60,7 @@ public:
         for(unsigned i = 0; i < this->edges.size(); i++){
             if(Kruskal::uni(this->edges.at(i).from, this->edges.at(i).to)){
                 ans += this->edges.at(i).cost;
-
+                // For RMST visualize
                 int from = this->edges.at(i).from, to = this->edges.at(i).to;
                 int x_segment, y_segment;
                 x_segment = std::max(this->net->pins.at(from).x - this->net->pins.at(to).x, this->net->pins.at(to).x - this->net->pins.at(from).x)
