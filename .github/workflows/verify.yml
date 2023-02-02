@@ -40,6 +40,5 @@ jobs:
 
     - name: save image
       uses: actions/upload-artifact@v3
-        with:
-          name: save all
-          path: ${{ github.workspace }}/out/.png
+      with:
+        path: ${{ github.workspace }}/out/.png
