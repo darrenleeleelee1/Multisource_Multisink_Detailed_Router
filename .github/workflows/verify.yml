@@ -38,7 +38,9 @@ jobs:
     - name: verify output
       run:  python3 ${{ github.workspace }}/visual.py --dir ./out/
 
-    - name: save image
+    
+    - name: save routing result
       uses: actions/upload-artifact@v3
       with:
+        name: routing_result
         path: ${{ github.workspace }}/out/.png
