@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  build:
+  build_and_verify_and_save:
     runs-on: ubuntu-latest
 
     steps:
@@ -43,4 +43,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: routing_result
-        path: ${{ github.workspace }}/out/.png
+        path: ${{ github.workspace }}/out/*.png
