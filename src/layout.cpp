@@ -19,7 +19,9 @@ public:
     Kruskal(){}
     Kruskal(Net *n, int via_cost, int horizontal_segments_cost, int vertical_segment_cost){
         net = n;
+        // set every pins parent as -1
         this->parents.assign(n->pins.size(), -1);
+        // build the complete graph by every node rectilinear distance, scaled with the hsegment/vsegment cost and via cost
         for(unsigned i = 0; i < n->pins.size(); i++){
             for(unsigned j = i + 1; j < n->pins.size(); j++){
                 int x_segment, y_segment;
@@ -60,38 +62,8 @@ public:
         for(unsigned i = 0; i < this->edges.size(); i++){
             if(Kruskal::uni(this->edges.at(i).from, this->edges.at(i).to)){
                 ans += this->edges.at(i).cost;
-                // For RMST visualize
-                int from = this->edges.at(i).from, to = this->edges.at(i).to;
-                int x_segment, y_segment;
-                x_segment = std::max(this->net->pins.at(from).x - this->net->pins.at(to).x, this->net->pins.at(to).x - this->net->pins.at(from).x)
-                                    - std::min(this->net->pins.at(from).x - this->net->pins.at(to).x, this->net->pins.at(to).x - this->net->pins.at(from).x);
-                y_segment = std::max(this->net->pins.at(from).y - this->net->pins.at(to).y, this->net->pins.at(to).y - this->net->pins.at(from).y)
-                                    - std::min(this->net->pins.at(from).y - this->net->pins.at(to).y, this->net->pins.at(to).y - this->net->pins.at(from).y);
-                if(y_segment != 0){ 
-                    if(this->net->pins.at(from).y > this->net->pins.at(to).y){
-                        if(this->net->pins.at(from).x < this->net->pins.at(to).x)
-                            this->net->vertical_segments.emplace_back(std::min(this->net->pins.at(from).x, this->net->pins.at(to).x), std::min(this->net->pins.at(from).y, this->net->pins.at(to).y), 1
-                                                        , std::min(this->net->pins.at(from).x, this->net->pins.at(to).x), std::max(this->net->pins.at(from).y, this->net->pins.at(to).y), 1);
-                        else{
-                            this->net->vertical_segments.emplace_back(std::max(this->net->pins.at(from).x, this->net->pins.at(to).x), std::min(this->net->pins.at(from).y, this->net->pins.at(to).y), 1
-                                                        , std::max(this->net->pins.at(from).x, this->net->pins.at(to).x), std::max(this->net->pins.at(from).y, this->net->pins.at(to).y), 1);
-                        }
-                    }
-                    else{
-                        if(this->net->pins.at(from).x < this->net->pins.at(to).x)
-                            this->net->vertical_segments.emplace_back(std::max(this->net->pins.at(from).x, this->net->pins.at(to).x), std::min(this->net->pins.at(from).y, this->net->pins.at(to).y), 1
-                                                        , std::max(this->net->pins.at(from).x, this->net->pins.at(to).x), std::max(this->net->pins.at(from).y, this->net->pins.at(to).y), 1);
-                        else{
-                            this->net->vertical_segments.emplace_back(std::min(this->net->pins.at(from).x, this->net->pins.at(to).x), std::min(this->net->pins.at(from).y, this->net->pins.at(to).y), 1
-                                                        , std::min(this->net->pins.at(from).x, this->net->pins.at(to).x), std::max(this->net->pins.at(from).y, this->net->pins.at(to).y), 1);
-                        }
-                    }
-                }
-                if(x_segment != 0) 
-                    this->net->horizontal_segments.emplace_back(std::min(this->net->pins.at(from).x, this->net->pins.at(to).x), std::min(this->net->pins.at(from).y, this->net->pins.at(to).y), 0
-                                                        , std::max(this->net->pins.at(from).x, this->net->pins.at(to).x), std::min(this->net->pins.at(from).y, this->net->pins.at(to).y), 0);
-                
-                
+                // store the two pin nets
+                this->net->two_pins.push_back(std::make_pair(this->edges.at(i).from, this->edges.at(i).to));
                 if(++edge_cnt == this->parents.size() - 1) break;
             }
         }
@@ -101,5 +73,6 @@ public:
 };
 void Net::rmst_kruskal(int via_cost, int horizontal_segments_cost, int vertical_segment_cost){
 	Kruskal kruskal(this, via_cost, horizontal_segments_cost, vertical_segment_cost);
-    std::cout << "Net id#"<< this->id << " cost of rmst= " << kruskal.cost_rmst() << "\n";
+    int cost_rmst = kruskal.cost_rmst();
+    if(cost_rmst == -1) std::cout << "Error, net#" << this->id << " RMST build failed.\n";
 }

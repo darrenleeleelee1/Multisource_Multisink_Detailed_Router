@@ -2,6 +2,7 @@
 #include "layout.hpp"
 #include "io.hpp"
 #include "timer.hpp"
+#include "router.hpp"
 int main(int argc, char const *argv[]){
     Timer timer;
 
@@ -11,8 +12,8 @@ int main(int argc, char const *argv[]){
     io::readLayout(&layout, argv[1]);
     std::cout << "Read time: " << timer.getShortTerm() << "\n";
     
-    for(auto &n : layout.netlist) n.rmst_kruskal(layout.via_cost, layout.horizontal_segment_cost, layout.vertical_segment_cost);
-
+    Router router(&layout);
+    router.main();
 
     std::cout << "Write Layout\n"; timer.setShortTerm();
     io::writeLayout(&layout, argv[2]);

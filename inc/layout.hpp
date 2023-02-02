@@ -58,7 +58,7 @@ public:
 	}
 	~Net(){}
 
-	int64_t getWirelength(){
+	int getWirelength(){
 		// TODO compute the wirelength
 		return 0;
 	}
@@ -81,8 +81,8 @@ public:
 			, horizontal_segment_cost(hsc), vertical_segment_cost(vsc) {}
 	~Layout(){}
 
-	int64_t getWirelength(){
-		int64_t sum = 0;
+	int getWirelength(){
+		int sum = 0;
 		for(unsigned i = 0; i < this->netlist.size(); i++){
 			sum += this->netlist.at(i).getWirelength();
 		}
