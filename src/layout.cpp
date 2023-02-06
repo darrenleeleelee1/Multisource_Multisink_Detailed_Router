@@ -63,7 +63,7 @@ public:
             if(Kruskal::uni(this->edges.at(i).from, this->edges.at(i).to)){
                 ans += this->edges.at(i).cost;
                 // store the two pin nets
-                this->net->two_pins.push_back(std::make_pair(this->edges.at(i).from, this->edges.at(i).to));
+                this->net->two_pins_net.push_back(std::make_pair(this->edges.at(i).from, this->edges.at(i).to));
                 if(++edge_cnt == this->parents.size() - 1) break;
             }
         }

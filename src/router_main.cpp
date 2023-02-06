@@ -2,7 +2,7 @@
 #include <iostream>
 #include "router.hpp"
 void Router::main(){
-    Router::twoPinNetDecomposition();
+    this->twoPinNetDecomposition();
 
     // sort Nets, try to add some heuristic
     // first pick the pins number, from the large to the small
@@ -36,5 +36,8 @@ void Router::main(){
         else return a.pins.size() > b.pins.size();
     });
 
-    
+    for(auto &n : this->layout->netlist){
+        this->tree2tree_maze_routing(&n);
+    }
+
 }

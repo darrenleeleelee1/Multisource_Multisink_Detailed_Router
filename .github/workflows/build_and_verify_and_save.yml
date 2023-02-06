@@ -13,6 +13,9 @@ jobs:
     - name: checkout code
       uses: actions/checkout@v3
     
+    - name: mkdir artifacts
+      run : mkdir artifacts
+
     - name: load dependecy
       run : pip3 install -r ${{ github.workspace }}/requirements.txt
     
@@ -27,20 +30,25 @@ jobs:
       run: mkdir ${{ github.workspace }}/obj 
 
     - name: build Router
-      run:  make -j4
+      run:  make -j8
 
     - name: run Router
       run:  |
         for i in {0..9}; do 
-        ${{ github.workspace }}/router ${{ github.workspace }}/case/test$i.txt ${{ github.workspace }}/out/test$i.txt
+        ${{ github.workspace }}/router ${{ github.workspace }}/case/test$i.txt ${{ github.workspace }}/artifacts/test$i.txt
         done
 
     - name: verify output
-      run:  python3 ${{ github.workspace }}/visual.py --dir ./out/
+      run:  python3 ${{ github.workspace }}/visual.py --dir ./artifacts/
 
     
     - name: save routing result
       uses: actions/upload-artifact@v3
       with:
         name: routing_result
-        path: ${{ github.workspace }}/out/*.png
+        path: ${{ github.workspace }}/artifacts/*
+
+    - name: rm -rf artifacts
+      run : rm -rf artifacts
+    
+  
