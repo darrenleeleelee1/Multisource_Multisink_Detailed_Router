@@ -26,8 +26,8 @@ jobs:
           echo "python3 path: $(which python3)"
           echo "python3 version: $(python3 --version)"
 
-    # - name: create obj directory
-    #   run: mkdir ${{ github.workspace }}/obj 
+    - name: create obj directory
+      run: mkdir ${{ github.workspace }}/obj 
 
     - name: build Router
       run:  make -j8
