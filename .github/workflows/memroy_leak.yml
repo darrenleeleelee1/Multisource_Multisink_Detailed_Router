@@ -24,8 +24,8 @@ jobs:
           echo "gcc path: $(which gcc)"
           echo "gcc version: $(gcc --version)"
 
-    - name: create obj directory
-      run: mkdir ${{ github.workspace }}/obj 
+    # - name: create obj directory
+    #   run: mkdir ${{ github.workspace }}/obj 
 
     - name: build Router
       run:  make -j8
