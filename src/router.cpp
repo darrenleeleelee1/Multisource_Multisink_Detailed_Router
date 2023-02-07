@@ -1,5 +1,6 @@
 #include <queue>
 #include <cmath>
+#include <iostream>
 #include "router.hpp"
 std::vector<int> x_orientation = {1, 0, -1, 0};
 std::vector<int> y_orientation = {0, -1, 0, 1};
@@ -90,47 +91,52 @@ void Router::tree2tree_maze_routing(Net *net){
         }
         // ::: Dijkstra :::
         // ::: Backtracking :::
-        Segment *tmp_s = nullptr;
-        while(current->prevertex != nullptr){
-            current->obstacle = true;
-            if(tmp_s == nullptr){
-                tmp_s = new Segment();
-                tmp_s->attribute = current->coordinate.z;
-                tmp_s->x = current->coordinate.x;
-                tmp_s->y = current->coordinate.y;
-            }
-            if(tmp_s->attribute != current->coordinate.z){
-                net->vialist.emplace_back(current->coordinate.x, current->coordinate.y);
-                this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->obstacle = true;
-                if(tmp_s->x != current->coordinate.x || tmp_s->y != current->coordinate.y){
-                    if(tmp_s->attribute == 0){
-                        net->horizontal_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
-                            , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
-                    }
-                    else{
-                        net->vertical_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
-                            , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
-                    }
-                }
-                tmp_s->attribute = current->coordinate.z;
-                tmp_s->x = current->coordinate.x;
-                tmp_s->y = current->coordinate.y;
-            }
-            current = current->prevertex;
-        }
-        if(current->coordinate.z == 1){
-            net->vialist.emplace_back(current->coordinate.x, current->coordinate.y);
-        }
-        if(tmp_s->attribute == 0){
-            net->horizontal_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
-                , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
+        if(current->coordinate == this->grid->graph.at(net->pins.at(tpn.first).x).at(net->pins.at(tpn.first).y).at(net->pins.at(tpn.first).z)->coordinate){
+            std::cout << "Error: Net#" << net->id << " pin#" << tpn.first << "-pin#" << tpn.second << " routing failed.\n";
         }
         else{
-            net->vertical_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
-                , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
+            Segment *tmp_s = nullptr;
+            while(current->prevertex != nullptr){
+                current->obstacle = true;
+                if(tmp_s == nullptr){
+                    tmp_s = new Segment();
+                    tmp_s->attribute = current->coordinate.z;
+                    tmp_s->x = current->coordinate.x;
+                    tmp_s->y = current->coordinate.y;
+                }
+                if(tmp_s->attribute != current->coordinate.z){
+                    net->vialist.emplace_back(current->coordinate.x, current->coordinate.y);
+                    this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->obstacle = true;
+                    if(tmp_s->x != current->coordinate.x || tmp_s->y != current->coordinate.y){
+                        if(tmp_s->attribute == 0){
+                            net->horizontal_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
+                                , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
+                        }
+                        else{
+                            net->vertical_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
+                                , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
+                        }
+                    }
+                    tmp_s->attribute = current->coordinate.z;
+                    tmp_s->x = current->coordinate.x;
+                    tmp_s->y = current->coordinate.y;
+                }
+                current = current->prevertex;
+            }
+            if(current->coordinate.z == 1){
+                net->vialist.emplace_back(current->coordinate.x, current->coordinate.y);
+            }
+            if(tmp_s->attribute == 0){
+                net->horizontal_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
+                    , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
+            }
+            else{
+                net->vertical_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
+                    , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
+            }
+            delete tmp_s;
+            // ::: Backtracking :::
         }
-        delete tmp_s;
-        // ::: Backtracking :::
         // Let the second point reset to not the sink
         this->grid->resetSinks(net->pins.at(tpn.second));
     }
