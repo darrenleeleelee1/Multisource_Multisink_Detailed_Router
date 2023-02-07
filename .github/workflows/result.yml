@@ -34,8 +34,9 @@ jobs:
 
     - name: run Router
       run:  |
-        for i in {0..9}; do 
-        ${{ github.workspace }}/router ${{ github.workspace }}/case/test$i.txt ${{ github.workspace }}/artifacts/test$i.txt
+        for i in {0..9}; do
+          echo "Running case test$i.txt"
+          ${{ github.workspace }}/router ${{ github.workspace }}/case/test$i.txt ${{ github.workspace }}/artifacts/test$i.txt
         done
 
     - name: verify output
