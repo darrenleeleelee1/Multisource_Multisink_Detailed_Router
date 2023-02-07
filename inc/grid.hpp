@@ -5,7 +5,7 @@
 class Vertex{
 public:
     Coordinate3D coordinate;
-    Coordinate3D *prevertex = nullptr;
+    Vertex *prevertex = nullptr;
     int distance = INT32_MAX;
     bool obstacle = false;
     bool is_sink = false;
@@ -31,7 +31,7 @@ public:
             for(int j = 0; j <= height; j++){
                 graph.at(i).at(j).resize(z_depth);
                 graph.at(i).at(j).at(0) = new Vertex{i, j, 0, false, false};
-                graph.at(i).at(j).at(0) = new Vertex{i, j, 1, false, false};
+                graph.at(i).at(j).at(1) = new Vertex{i, j, 1, false, false};
             }
         }
     }
@@ -72,8 +72,7 @@ public:
     void setObstacles(Coordinate3D start_point, Coordinate3D end_point){
         // pins
         if(start_point == end_point){
-            this->graph.at(start_point.x).at(start_point.y).at(0)->obstacle = true;
-            this->graph.at(start_point.x).at(start_point.y).at(1)->obstacle = true;
+            this->graph.at(start_point.x).at(start_point.y).at(start_point.z)->obstacle = true;
         }
         else{
             // Horizontal
@@ -90,39 +89,42 @@ public:
             }
         }
     }
-
+    void setObstacles(std::vector<Coordinate3D> pins){
+        for(auto v : pins){
+            this->graph.at(v.x).at(v.y).at(v.z)->obstacle = true;
+        }
+    }
+    void resetObstacles(std::vector<Coordinate3D> pins){
+        for(auto v : pins){
+            this->graph.at(v.x).at(v.y).at(v.z)->obstacle = false;
+        }
+    }
     void setSinks(Segment seg){
         if(seg.attribute == 0){
             for(int i = std::min(seg.x, seg.neighbor); i <= std::max(seg.x, seg.neighbor); i++){
                 this->graph.at(i).at(seg.y).at(0)->is_sink = true;
-                this->graph.at(i).at(seg.y).at(1)->is_sink = true;
             }
         }
         else{
             for(int i = std::min(seg.y, seg.neighbor); i <= std::max(seg.y, seg.neighbor); i++){
-                this->graph.at(seg.x).at(i).at(0)->is_sink = true;
                 this->graph.at(seg.x).at(i).at(1)->is_sink = true;
             }
         }
     }
     void setSinks(Coordinate3D coor){
-        this->graph.at(coor.x).at(coor.y).at(0)->is_sink = true;
-        this->graph.at(coor.x).at(coor.y).at(1)->is_sink = true;
+        this->graph.at(coor.x).at(coor.y).at(coor.z)->is_sink = true;
     }
     void setSinks(std::vector<Coordinate3D> pins){
         for(auto v : pins){
-            this->graph.at(v.x).at(v.y).at(0)->is_sink = true;
-            this->graph.at(v.x).at(v.y).at(1)->is_sink = true;
+            this->graph.at(v.x).at(v.y).at(v.z)->is_sink = true;
         }
     }
     void resetSinks(Coordinate3D coor){
-        this->graph.at(coor.x).at(coor.y).at(0)->is_sink = false;
-        this->graph.at(coor.x).at(coor.y).at(1)->is_sink = false;
+        this->graph.at(coor.x).at(coor.y).at(coor.z)->is_sink = false;
     }
     void resetSinks(std::vector<Coordinate3D> pins){
         for(auto v : pins){
-            this->graph.at(v.x).at(v.y).at(0)->is_sink = false;
-            this->graph.at(v.x).at(v.y).at(1)->is_sink = false;
+            this->graph.at(v.x).at(v.y).at(v.z)->is_sink = false;
         }
     }
 };

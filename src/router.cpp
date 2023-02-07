@@ -1,12 +1,8 @@
 #include <queue>
 #include <cmath>
 #include "router.hpp"
-void Router::twoPinNetDecomposition(){
-    for(auto &n : this->layout->netlist) {
-        n.rmst_kruskal(this->layout->via_cost
-            , this->layout->horizontal_segment_cost, this->layout->vertical_segment_cost);
-    }
-}
+std::vector<int> x_orientation = {1, 0, -1, 0};
+std::vector<int> y_orientation = {0, -1, 0, 1};
 int maze_route_cost(Router *R, Coordinate3D sp, Coordinate3D ep){
     int cost = 0;
     if(sp.z != ep.z){
@@ -15,19 +11,25 @@ int maze_route_cost(Router *R, Coordinate3D sp, Coordinate3D ep){
     cost += std::abs(sp.x - ep.x) * R->layout->horizontal_segment_cost + std::abs(sp.y - ep.y) * R->layout->vertical_segment_cost;
     return cost;
 }
+bool outOfBound(Router *R, Coordinate3D p){
+    if(p.x < 0 || p.x > R->layout->width) return true;
+    else if(p.y < 0 || p.y > R->layout->height) return true;
+    else return false;
+}
+void Router::twoPinNetDecomposition(){
+    for(auto &n : this->layout->netlist) {
+        n.rmst_kruskal(this->layout->via_cost
+            , this->layout->horizontal_segment_cost, this->layout->vertical_segment_cost);
+    }
+}
 void Router::tree2tree_maze_routing(Net *net){
-    // Let all the net pins as sink
-    this->grid->setSinks(net->pins);
-    
     for(auto &tpn : net->two_pins_net){
         Vertex *current;
-        Vertex *prenode = this->grid->graph.at(net->pins.at(tpn.first).x)
-            .at(net->pins.at(tpn.first).y).at(net->pins.at(tpn.first).z);
         auto comp = [](const Vertex *lhs, const Vertex *rhs) {return lhs->distance > rhs->distance;};
         std::priority_queue<Vertex*, std::vector<Vertex*>, decltype(comp)> pq(comp);
         // ::: Initilize :::
-        // Let the source point not the sink
-        this->grid->resetSinks(net->pins.at(tpn.first));
+        // Let the second point be the sink
+        this->grid->setSinks(net->pins.at(tpn.second));
         this->grid->setDistanceInfinity();
         this->grid->setDistanceZero(net->pins.at(tpn.first));
         pq.push(this->grid->graph.at(net->pins.at(tpn.first).x)
@@ -63,42 +65,73 @@ void Router::tree2tree_maze_routing(Net *net){
         // ::: Dijkstra :::
         while(!pq.empty()){
             current = pq.top(); pq.pop();
-            if(current->is_sink){
+            
+            if(current->is_sink || this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_sink){
+                if(!current->is_sink) {
+                    this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->prevertex = current;
+                    current = this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2);
+                }
                 break;
             }
             // Enumerate 4 directions
             for(int i = 0; i < 4; i++){
-                switch (i)
-                {
-                // right
-                case 0:
-                    if(maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x, current->coordinate.y, current->coordinate.z}))
-                    break;
-                // bot
-                case 1:
-                    break;
-                // left
-                case 2:
-                    break;
-                // top
-                case 3:
-                    break;
-                default:
-                    break;
+                if(outOfBound(this, Coordinate3D{current->coordinate.x + x_orientation.at(i), current->coordinate.y+ y_orientation.at(i), i % 2})) continue;
+                if(this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->obstacle
+                    && !(this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->is_sink)) continue;
+                if(current ->distance + maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x + x_orientation.at(i), current->coordinate.y + y_orientation.at(i), i % 2})
+                        < this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->distance){
+                    this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->prevertex = current;
+                    this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->distance 
+                        = current ->distance + maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x + x_orientation.at(i), current->coordinate.y + y_orientation.at(i), i % 2}); 
+                    pq.push(this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2));
                 }
+                    
             }
         }
         // ::: Dijkstra :::
-
-        
-
-    
-        // Let the source point turn back to sink
-        this->grid->setSinks(net->pins.at(tpn.first));
+        // ::: Backtracking :::
+        Segment *tmp_s = nullptr;
+        while(current->prevertex != nullptr){
+            current->obstacle = true;
+            if(tmp_s == nullptr){
+                tmp_s = new Segment();
+                tmp_s->attribute = current->coordinate.z;
+                tmp_s->x = current->coordinate.x;
+                tmp_s->y = current->coordinate.y;
+            }
+            if(tmp_s->attribute != current->coordinate.z){
+                net->vialist.emplace_back(current->coordinate.x, current->coordinate.y);
+                this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->obstacle = true;
+                if(tmp_s->x != current->coordinate.x || tmp_s->y != current->coordinate.y){
+                    if(tmp_s->attribute == 0){
+                        net->horizontal_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
+                            , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
+                    }
+                    else{
+                        net->vertical_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
+                            , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
+                    }
+                }
+                tmp_s->attribute = current->coordinate.z;
+                tmp_s->x = current->coordinate.x;
+                tmp_s->y = current->coordinate.y;
+            }
+            current = current->prevertex;
+        }
+        if(current->coordinate.z == 1){
+            net->vialist.emplace_back(current->coordinate.x, current->coordinate.y);
+        }
+        if(tmp_s->attribute == 0){
+            net->horizontal_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
+                , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
+        }
+        else{
+            net->vertical_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
+                , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
+        }
+        delete tmp_s;
+        // ::: Backtracking :::
+        // Let the second point reset to not the sink
+        this->grid->resetSinks(net->pins.at(tpn.second));
     }
-
-    // reset all the net pins
-    this->grid->resetSinks(net->pins);
-
-
 }

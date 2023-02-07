@@ -39,7 +39,8 @@ public:
 	Coordinate3D start_point, end_point;
 	Segment_Draw(){}
 	Segment_Draw(int _spx, int  _spy, int  _spz, int _epx, int  _epy, int  _epz)
-		: start_point(_spx, _spy, _spz), end_point(_epx, _epy, _epz) {}
+		: start_point(std::min(_spx, _epx), std::min(_spy, _epy), _spz)
+			, end_point(std::max(_spx, _epx), std::max(_spy, _epy), _epz) {}
 	~Segment_Draw(){}
 	bool operator==(const Segment_Draw &other) const {
     	return this->start_point == other.start_point && this->end_point == other.end_point;
