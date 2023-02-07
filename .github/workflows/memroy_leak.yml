@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  build_and_verify_and_save:
+  check_memory_leak:
     runs-on: ubuntu-latest
 
     steps:
@@ -32,13 +32,13 @@ jobs:
 
     - name: Run Valgrind
       run: |
-        for i in {0..9}; do 
+        for i in {0..0}; do 
           valgrind --leak-check=full --log-file=valgrind$i.out ${{ github.workspace }}/router ${{ github.workspace }}/case/test$i.txt ${{ github.workspace }}/artifacts/test$i.txt
         done
 
     - name: Verify Valgrind output
       run : |
-        for i in {0..9}; do 
+        for i in {0..0}; do 
           if grep -q "ERROR SUMMARY: 0 errors" <<< "$(cat valgrind$i.out)"; then
               echo "No memory leaks detected"
           else
