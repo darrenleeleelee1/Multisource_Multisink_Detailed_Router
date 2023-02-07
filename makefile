@@ -47,4 +47,4 @@ $(OBJ_DIR)/main.o: main.cpp
 # A rule to clean up the project directory
 .PHONY: clean
 clean:
-	rm -f $(OBJ_DIR)/*.o out/*.txt $(EXE)
+	rm -f $(OBJ_DIR)/*.o out/* $(EXE)
