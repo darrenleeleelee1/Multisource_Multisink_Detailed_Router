@@ -35,7 +35,16 @@ public:
             }
         }
     }
-    ~Grid() {}
+    ~Grid() {
+        for (unsigned i = 0; i < graph.size(); i++) {
+            for (unsigned j = 0; j < graph.at(i).size(); j++) {
+                for (unsigned k = 0; k < graph.at(i).at(j).size(); k++) {
+                    delete graph.at(i).at(j).at(k);
+                }
+            }
+        }
+
+    }
     void setPrevertexNull(){
         for (unsigned i = 0; i < graph.size(); i++) {
             for (unsigned j = 0; j < graph[i].size(); j++) {

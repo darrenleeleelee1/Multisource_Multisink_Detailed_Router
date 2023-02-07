@@ -1,0 +1,54 @@
+name: result
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build_and_verify_and_save:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout code
+      uses: actions/checkout@v3
+    
+    - name: mkdir artifacts
+      run : mkdir artifacts
+
+    - name: load dependecy
+      run : sudo apt-get update && sudo apt-get install valgrind -y
+    
+    - name: show dependency
+      run: |
+          echo "gcc path: $(which gcc)"
+          echo "gcc version: $(gcc --version)"
+
+    - name: create obj directory
+      run: mkdir ${{ github.workspace }}/obj 
+
+    - name: build Router
+      run:  make -j8
+
+    - name: Run Valgrind
+      run: |
+        for i in {0..9}; do 
+          valgrind --leak-check=full --log-file=valgrind$i.out ${{ github.workspace }}/router ${{ github.workspace }}/case/test$i.txt ${{ github.workspace }}/artifacts/test$i.txt
+        done
+
+    - name: Verify Valgrind output
+      run : |
+        for i in {0..9}; do 
+          if grep -q "ERROR SUMMARY: 0 errors" <<< "$(cat valgrind$i.out)"; then
+              echo "No memory leaks detected"
+          else
+              echo "Memory leaks detected!"
+              exit 1
+          fi
+        done
+
+
+    - name: rm -rf artifacts
+      run : rm -rf artifacts
+    
+  
