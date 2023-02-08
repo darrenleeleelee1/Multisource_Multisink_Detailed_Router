@@ -89,7 +89,7 @@ void segmentRegularize(Layout *layout){
                     , s.neighbor, s.y, s.attribute);
             }
             else{
-                n.horizontal_segments.emplace_back(s.x, s.y, s.attribute
+                n.vertical_segments.emplace_back(s.x, s.y, s.attribute
                     , s.x, s.neighbor, s.attribute);
             }
         }
