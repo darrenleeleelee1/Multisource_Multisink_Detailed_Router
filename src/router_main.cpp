@@ -40,7 +40,8 @@ void Router::main(){
         // Because Router constructor mark all the net pins to obstacle
         // Mark current net pins not a obstacle
         this->grid->resetObstacles(n.pins);
-        this->pin2pin_maze_routing(&n);
+        // this->pin2pin_maze_routing(&n);
+        this->tree2tree_maze_routing(&n);
         // When this net route success, turn the net pins into obstacles
         this->grid->setObstacles(n.pins);
     }

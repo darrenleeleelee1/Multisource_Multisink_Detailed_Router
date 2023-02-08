@@ -129,6 +129,18 @@ public:
             this->graph.at(v.x).at(v.y).at(v.z)->is_sink = true;
         }
     }
+    void resetSinks(Segment seg){
+        if(seg.attribute == 0){
+            for(int i = std::min(seg.x, seg.neighbor); i <= std::max(seg.x, seg.neighbor); i++){
+                this->graph.at(i).at(seg.y).at(seg.attribute)->is_sink = false;
+            }
+        }
+        else{
+            for(int i = std::min(seg.y, seg.neighbor); i <= std::max(seg.y, seg.neighbor); i++){
+                this->graph.at(seg.x).at(i).at(seg.attribute)->is_sink = false;
+            }
+        }
+    }
     void resetSinks(Coordinate3D coor){
         this->graph.at(coor.x).at(coor.y).at(coor.z)->is_sink = false;
     }
