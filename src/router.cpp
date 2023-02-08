@@ -23,7 +23,7 @@ void Router::twoPinNetDecomposition(){
             , this->layout->horizontal_segment_cost, this->layout->vertical_segment_cost);
     }
 }
-void Router::tree2tree_maze_routing(Net *net){
+void Router::pin2pin_maze_routing(Net *net){
     for(auto &tpn : net->two_pins_net){
         Vertex *current;
         auto comp = [](const Vertex *lhs, const Vertex *rhs) {return lhs->distance > rhs->distance;};
@@ -39,33 +39,6 @@ void Router::tree2tree_maze_routing(Net *net){
             .at(net->pins.at(tpn.first).y).at(net->pins.at(tpn.first).z));
         // Set all vertex's prevertex to nullptr
         this->grid->setPrevertexNull();
-
-        for(auto &st : net->subtrees){
-            if(st.pins.count(tpn.first)){
-                for(auto &p : st.paths){
-                    for(auto &s : p.segments){
-                        this->grid->setDistanceZero(s);
-                        if(s.attribute == 0){
-                            for(int i = std::min(s.x, s.neighbor); i <= std::max(s.x, s.neighbor); i++){
-                                pq.push(this->grid->graph.at(i).at(s.y).at(s.neighbor));
-                            }
-                        }
-                        else{
-                            for(int i = std::min(s.y, s.neighbor); i <= std::max(s.y, s.neighbor); i++){
-                                pq.push(this->grid->graph.at(s.x).at(i).at(s.neighbor));
-                            }
-                        }
-                    }
-                }
-            }
-            else{
-                for(auto &p : st.paths){
-                    for(auto &s : p.segments){
-                        this->grid->setSinks(s);
-                    }
-                }
-            }
-        }
         // ::: Initilize :::
         // ::: Dijkstra :::
         while(!pq.empty()){
@@ -81,7 +54,7 @@ void Router::tree2tree_maze_routing(Net *net){
             // Enumerate 4 directions
             for(int i = 0; i < 4; i++){
                 if(outOfBound(this, Coordinate3D{current->coordinate.x + x_orientation.at(i), current->coordinate.y+ y_orientation.at(i), i % 2})) continue;
-                if(this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->obstacle
+                if(this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->is_obstacle
                     && !(this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->is_sink)) continue;
                 if(current ->distance + maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x + x_orientation.at(i), current->coordinate.y + y_orientation.at(i), i % 2})
                         < this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->distance){
@@ -101,7 +74,7 @@ void Router::tree2tree_maze_routing(Net *net){
         else{
             Segment *tmp_s = nullptr;
             while(current->prevertex != nullptr){
-                current->obstacle = true;
+                current->is_obstacle = true;
                 if(tmp_s == nullptr){
                     tmp_s = new Segment();
                     tmp_s->attribute = current->coordinate.z;
@@ -110,7 +83,7 @@ void Router::tree2tree_maze_routing(Net *net){
                 }
                 if(tmp_s->attribute != current->coordinate.z){
                     net->vialist.emplace_back(current->coordinate.x, current->coordinate.y);
-                    this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->obstacle = true;
+                    this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_obstacle = true;
                     if(tmp_s->x != current->coordinate.x || tmp_s->y != current->coordinate.y){
                         if(tmp_s->attribute == 0){
                             net->segments.emplace_back(tmp_s->attribute, tmp_s->x, tmp_s->y, current->coordinate.x);

@@ -24,5 +24,6 @@ public:
 
     void main();
     void twoPinNetDecomposition();
+    void pin2pin_maze_routing(Net *net);
     void tree2tree_maze_routing(Net *net);
 };
