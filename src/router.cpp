@@ -31,11 +31,15 @@ void Router::tree2tree_maze_routing(Net *net){
         // ::: Initilize :::
         // Let the second point be the sink
         this->grid->setSinks(net->pins.at(tpn.second));
+        // Set all vertex's distance to infinity
         this->grid->setDistanceInfinity();
+        // Set the source's distance to zero
         this->grid->setDistanceZero(net->pins.at(tpn.first));
         pq.push(this->grid->graph.at(net->pins.at(tpn.first).x)
             .at(net->pins.at(tpn.first).y).at(net->pins.at(tpn.first).z));
+        // Set all vertex's prevertex to nullptr
         this->grid->setPrevertexNull();
+
         for(auto &st : net->subtrees){
             if(st.pins.count(tpn.first)){
                 for(auto &p : st.paths){
@@ -109,12 +113,10 @@ void Router::tree2tree_maze_routing(Net *net){
                     this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->obstacle = true;
                     if(tmp_s->x != current->coordinate.x || tmp_s->y != current->coordinate.y){
                         if(tmp_s->attribute == 0){
-                            net->horizontal_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
-                                , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
+                            net->segments.emplace_back(tmp_s->attribute, tmp_s->x, tmp_s->y, current->coordinate.x);
                         }
                         else{
-                            net->vertical_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
-                                , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
+                            net->segments.emplace_back(tmp_s->attribute, tmp_s->x, tmp_s->y, current->coordinate.y);
                         }
                     }
                     tmp_s->attribute = current->coordinate.z;
@@ -127,12 +129,10 @@ void Router::tree2tree_maze_routing(Net *net){
                 net->vialist.emplace_back(current->coordinate.x, current->coordinate.y);
             }
             if(tmp_s->attribute == 0){
-                net->horizontal_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
-                    , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
+                net->segments.emplace_back(tmp_s->attribute, tmp_s->x, tmp_s->y, current->coordinate.x);
             }
             else{
-                net->vertical_segments.emplace_back(tmp_s->x, tmp_s->y, tmp_s->attribute
-                    , current->coordinate.x, current->coordinate.y, tmp_s->attribute);
+                net->segments.emplace_back(tmp_s->attribute, tmp_s->x, tmp_s->y, current->coordinate.y);
             }
             delete tmp_s;
             // ::: Backtracking :::

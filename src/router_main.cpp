@@ -35,8 +35,10 @@ void Router::main(){
         }
         else return a.pins.size() > b.pins.size();
     });
+
     for(auto &n : this->layout->netlist){
-        // Mark the net pins not a obstacle
+        // Because Router constructor mark all the net pins to obstacle
+        // Mark current net pins not a obstacle
         this->grid->resetObstacles(n.pins);
         this->tree2tree_maze_routing(&n);
         // When this net route success, turn the net pins into obstacles

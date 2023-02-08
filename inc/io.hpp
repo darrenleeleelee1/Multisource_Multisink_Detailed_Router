@@ -20,13 +20,12 @@ void tokenLine(std::vector<std::string> &tokens, std::string line){
     }
 }
 
-void readLayout(Layout *layout, char const *file_path)
-{
+void readLayout(Layout *layout, char const *file_path){
     std::ifstream in_file(file_path);
     std::string line;
     std::vector<std::string> tokens;
     while(getline(in_file, line)){
-        tokenLine(tokens, line);
+        io::tokenLine(tokens, line);
         if(tokens.size() == static_cast<unsigned int>(2)){
             if(tokens[0] == "Width"){
                 layout->width = stoi(tokens[1]);
@@ -40,7 +39,7 @@ void readLayout(Layout *layout, char const *file_path)
             else if(tokens[0] == "Obstacle_num"){
                 layout->obstacles.resize(stoi(tokens[1]));
                 for(unsigned i = 0; i < layout->obstacles.size(); i++){
-                    getline(in_file, line); tokenLine(tokens, line);
+                    getline(in_file, line); io::tokenLine(tokens, line);
                     if(stoi(tokens[2]) == 0)
                         layout->obstacles.at(i) = Obstacle{stoi(tokens[0]), stoi(tokens[1]), stoi(tokens[2])
                                         , stoi(tokens[3]), stoi(tokens[4]) - 1, stoi(tokens[5])};
@@ -54,17 +53,17 @@ void readLayout(Layout *layout, char const *file_path)
                 for(unsigned i = 0; i < layout->netlist.size(); i++){
                     Net tmp_net;
                     while(getline(in_file, line)){
-                        tokenLine(tokens, line);
+                        io::tokenLine(tokens, line);
                         if(tokens.size() == static_cast<unsigned int>(2) && tokens[0] == "Net_id") break;
                     }
                     tmp_net.id = stoi(tokens[1]);
                     while(getline(in_file, line)){
-                        tokenLine(tokens, line);
+                        io::tokenLine(tokens, line);
                         if(tokens.size() == static_cast<unsigned int>(2) && tokens[0] == "pin_num") break;
                     }
                     tmp_net.pins.resize(stoi(tokens[1]));
                     for(unsigned j = 0; j < tmp_net.pins.size(); j++){
-                        getline(in_file, line); tokenLine(tokens, line);
+                        getline(in_file, line); io::tokenLine(tokens, line);
                         tmp_net.pins.at(j) = Coordinate3D{stoi(tokens[0]), stoi(tokens[1]), stoi(tokens[2])};
                     }
                     layout->netlist.at(i) = tmp_net;
@@ -82,8 +81,23 @@ void readLayout(Layout *layout, char const *file_path)
         }
     }
 }
-void writeLayout(Layout *layout, char const *file_path)
-{
+void segmentRegularize(Layout *layout){
+    for(auto &n : layout->netlist){
+        for(auto &s : n.segments){
+            if(s.attribute == 0){
+                n.horizontal_segments.emplace_back(s.x, s.y, s.attribute
+                    , s.neighbor, s.y, s.attribute);
+            }
+            else{
+                n.horizontal_segments.emplace_back(s.x, s.y, s.attribute
+                    , s.x, s.neighbor, s.attribute);
+            }
+        }
+    }
+}
+void writeLayout(Layout *layout, char const *file_path){
+    io::segmentRegularize(layout);
+
     std::ofstream out_file(file_path, std::ofstream::trunc);
     out_file << "Width " << layout->width << "\n";
     out_file << "Height " << layout->height << "\n";

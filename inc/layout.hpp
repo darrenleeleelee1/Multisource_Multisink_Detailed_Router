@@ -51,7 +51,18 @@ public:
 	int attribute; // 0 for horizon, 1 for verticle
 	int x, y, neighbor;
 	Segment(){}
-	Segment(int _attr, int _x, int _y, int nei) : attribute(_attr), x(_x), y(_y), neighbor(nei) {}
+	Segment(int _attr, int _x, int _y, int nei) : attribute(_attr){
+		if(_attr == 0){
+			this->x = std::min(_x, nei);
+			this->y = _y;
+			this->neighbor = std::max(_x, nei);
+		}
+		else{
+			this->x = _x;
+			this->y = std::min(_y, nei);
+			this->neighbor = std::max(_y, nei);
+		}
+	}
 };
 class Path{
 public:
@@ -79,6 +90,8 @@ public:
 	std::vector<Coordinate3D> pins;
 	// For Ouput
 	std::vector<Coordinate2D> vialist;
+	std::vector<Segment> segments;
+	// Segment for drawing
 	std::vector<Segment_Draw> horizontal_segments;
 	std::vector<Segment_Draw> vertical_segments;
 	// For Router
@@ -88,6 +101,7 @@ public:
 		id = -1;
 		this->pins.resize(0);
 		this->vialist.resize(0);
+		this->segments.resize(0);
 		this->horizontal_segments.resize(0);
 		this->vertical_segments.resize(0);
 		this->subtrees.resize(0);
@@ -95,6 +109,7 @@ public:
 	Net(int _id) : id(_id){
 		this->pins.resize(0);
 		this->vialist.resize(0);
+		this->segments.resize(0);
 		this->horizontal_segments.resize(0);
 		this->vertical_segments.resize(0);
 		this->subtrees.resize(0);
