@@ -20,6 +20,11 @@ public:
 	bool operator==(const Coordinate2D &other) const {
     	return this->x == other.x && this->y == other.y;
     }
+	bool operator<(const Coordinate2D &other) const {
+    	if (this->x == other.x)
+        	return this->y < other.y;
+        return this->x < other.x;
+    }
 };
 class Obstacle{
 public:
@@ -66,22 +71,16 @@ public:
 };
 class Path{
 public:
-	std::vector<Segment> segments;
-	std::pair<Coordinate3D, Coordinate3D> pin_pair;
+	std::vector<Segment*> segments;
+	Coordinate3D start_pin, end_pin;
 	Path() {
 		this->segments.resize(0);
 	}
-	~Path() {}
-};
-class Subtree{
-public:
-	std::vector<Path> paths;
-	std::set<int> pins;
-	Subtree() {
-		this->pins.clear();
-		this->paths.resize(0);
+	~Path() {
+		for (auto s : segments) {
+			delete s;
+		}
 	}
-	~Subtree() {}
 };
 class Net{
 public:
@@ -89,38 +88,71 @@ public:
 	int id;
 	std::vector<Coordinate3D> pins;
 	// For Ouput
-	std::vector<Coordinate2D> vialist;
-	std::vector<Segment> segments;
+	std::set<Coordinate2D> vialist;
+	// std::vector<Segment> segments;
 	// Segment for drawing
 	std::vector<Segment_Draw> horizontal_segments;
 	std::vector<Segment_Draw> vertical_segments;
 	// For Router
 	std::vector<std::pair<int, int>> two_pins_net;
-	std::vector<Subtree> subtrees;
+	std::vector<Path*> paths;
 	Net(){
 		id = -1;
 		this->pins.resize(0);
-		this->vialist.resize(0);
-		this->segments.resize(0);
+		this->vialist.clear();
 		this->horizontal_segments.resize(0);
 		this->vertical_segments.resize(0);
-		this->subtrees.resize(0);
+		this->paths.resize(0);
 	}
 	Net(int _id) : id(_id){
 		this->pins.resize(0);
-		this->vialist.resize(0);
-		this->segments.resize(0);
+		this->vialist.clear();
 		this->horizontal_segments.resize(0);
 		this->vertical_segments.resize(0);
-		this->subtrees.resize(0);
+		this->paths.resize(0);
 	}
-	~Net(){}
+	~Net(){
+		for (auto p : paths) {
+			delete p;
+		}
+	}
 
 	int getWirelength(){
 		// TODO compute the wirelength
 		return 0;
 	}
+	// including adding via
+	void segmentRegularize(){
+		for(auto &p : this->paths){
+			for(auto &s : p->segments){
+				if(s->attribute == 0){
+					this->horizontal_segments.emplace_back(s->x, s->y, s->attribute
+						, s->neighbor, s->y, s->attribute);
 
+					bool first_pin_is_via = true, second_pin_is_via = true;
+					for(auto &pin : this->pins){
+						if(pin == Coordinate3D(s->x, s->y, s->attribute)) first_pin_is_via = false;
+						if(pin == Coordinate3D(s->neighbor, s->y, s->attribute)) second_pin_is_via = false;
+					}
+					if(first_pin_is_via) this->vialist.emplace(s->x, s->y);
+					if(second_pin_is_via) this->vialist.emplace(s->neighbor, s->y);
+					
+				}
+				else{
+					this->vertical_segments.emplace_back(s->x, s->y, s->attribute
+						, s->x, s->neighbor, s->attribute);
+
+					bool first_pin_is_via = true, second_pin_is_via = true;
+					for(auto &pin : this->pins){
+						if(pin == Coordinate3D(s->x, s->y, s->attribute)) first_pin_is_via = false;
+						if(pin == Coordinate3D(s->x, s->neighbor, s->attribute)) second_pin_is_via = false;
+					}
+					if(first_pin_is_via) this->vialist.emplace(s->x, s->y);
+					if(second_pin_is_via) this->vialist.emplace(s->x, s->neighbor);
+				}
+			}
+		}
+	}
 	void rmst_kruskal(int via_cost, int horizontal_segments_cost, int vertical_segment_cost);
 };
 class Layout{

@@ -81,23 +81,8 @@ void readLayout(Layout *layout, char const *file_path){
         }
     }
 }
-void segmentRegularize(Layout *layout){
-    for(auto &n : layout->netlist){
-        for(auto &s : n.segments){
-            if(s.attribute == 0){
-                n.horizontal_segments.emplace_back(s.x, s.y, s.attribute
-                    , s.neighbor, s.y, s.attribute);
-            }
-            else{
-                n.vertical_segments.emplace_back(s.x, s.y, s.attribute
-                    , s.x, s.neighbor, s.attribute);
-            }
-        }
-    }
-}
-void writeLayout(Layout *layout, char const *file_path){
-    io::segmentRegularize(layout);
 
+void writeLayout(Layout *layout, char const *file_path){
     std::ofstream out_file(file_path, std::ofstream::trunc);
     out_file << "Width " << layout->width << "\n";
     out_file << "Height " << layout->height << "\n";
@@ -114,14 +99,15 @@ void writeLayout(Layout *layout, char const *file_path){
     }
     out_file << "Net_num " << layout->netlist.size() << "\n";
     for(unsigned i = 0; i < layout->netlist.size(); i++){
+        layout->netlist.at(i).segmentRegularize();
         out_file << "Net_id " << layout->netlist.at(i).id << "\n";
         out_file << "pin_num " << layout->netlist.at(i).pins.size() << "\n";
         for(unsigned j = 0; j < layout->netlist.at(i).pins.size(); j++){
             out_file << layout->netlist.at(i).pins.at(j).x << " " << layout->netlist.at(i).pins.at(j).y << " " << layout->netlist.at(i).pins.at(j).z << "\n";
         }
         out_file << "Via_num " << layout->netlist.at(i).vialist.size() << "\n";
-        for(unsigned j = 0; j < layout->netlist.at(i).vialist.size(); j++){
-            out_file << layout->netlist.at(i).vialist.at(j).x << " " << layout->netlist.at(i).vialist.at(j).y << "\n";
+        for(auto &v : layout->netlist.at(i).vialist){
+            out_file << v.x << " " << v.y << "\n";
         }
         out_file << "H_segment_num " << layout->netlist.at(i).horizontal_segments.size() << "\n";
         for(unsigned j = 0; j < layout->netlist.at(i).horizontal_segments.size(); j++){

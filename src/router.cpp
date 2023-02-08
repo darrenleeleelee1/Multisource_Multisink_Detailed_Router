@@ -45,10 +45,6 @@ void Router::pin2pin_maze_routing(Net *net){
             current = pq.top(); pq.pop();
             
             if(current->is_sink || this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_sink){
-                if(!current->is_sink) {
-                    this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->prevertex = current;
-                    current = this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2);
-                }
                 break;
             }
             // Enumerate 4 directions
@@ -68,48 +64,95 @@ void Router::pin2pin_maze_routing(Net *net){
         }
         // ::: Dijkstra :::
         // ::: Backtracking :::
-        if(current->coordinate == this->grid->graph.at(net->pins.at(tpn.first).x).at(net->pins.at(tpn.first).y).at(net->pins.at(tpn.first).z)->coordinate){
+        Path *tmp_path = new Path();
+        net->paths.push_back(tmp_path);
+
+        if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->is_sink){
+            if(current->coordinate == net->pins.at(tpn.second)){
+                // Pin location
+                tmp_path->start_pin = current->coordinate;
+            }
+            else{
+                // Via location, set z to negative
+                tmp_path->start_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, -1);
+            }
+        }
+        else{
+            if(current->coordinate.x == net->pins.at(tpn.second).x && current->coordinate.y == net->pins.at(tpn.second).y
+                    && (current->coordinate.z + 1) % 2 == net->pins.at(tpn.second).z){
+                // Pin location
+                tmp_path->start_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, (current->coordinate.z + 1) % 2);
+            }
+            else{
+                // Via location, set z to negative
+                tmp_path->start_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, -1);
+            }
+        }
+
+        if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->distance == 0){
             std::cout << "Error: Net#" << net->id << " pin#" << tpn.first << "-pin#" << tpn.second << " routing failed.\n";
         }
         else{
-            Segment *tmp_s = nullptr;
+            Segment *tmp_seg = nullptr;
             while(current->prevertex != nullptr){
                 current->is_obstacle = true;
-                if(tmp_s == nullptr){
-                    tmp_s = new Segment();
-                    tmp_s->attribute = current->coordinate.z;
-                    tmp_s->x = current->coordinate.x;
-                    tmp_s->y = current->coordinate.y;
+                if(tmp_seg == nullptr){
+                    tmp_seg = new Segment();
+                    tmp_seg->attribute = current->coordinate.z;
+                    tmp_seg->x = current->coordinate.x;
+                    tmp_seg->y = current->coordinate.y;
                 }
-                if(tmp_s->attribute != current->coordinate.z){
-                    net->vialist.emplace_back(current->coordinate.x, current->coordinate.y);
+                if(tmp_seg->attribute != current->coordinate.z){
                     this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_obstacle = true;
-                    if(tmp_s->x != current->coordinate.x || tmp_s->y != current->coordinate.y){
-                        if(tmp_s->attribute == 0){
-                            net->segments.emplace_back(tmp_s->attribute, tmp_s->x, tmp_s->y, current->coordinate.x);
+                    if(tmp_seg->x != current->coordinate.x || tmp_seg->y != current->coordinate.y){
+                        if(tmp_seg->attribute == 0){
+                            tmp_seg->neighbor = current->coordinate.x;
                         }
                         else{
-                            net->segments.emplace_back(tmp_s->attribute, tmp_s->x, tmp_s->y, current->coordinate.y);
+                            tmp_seg->neighbor = current->coordinate.y;
                         }
+                        if(tmp_seg != nullptr) tmp_path->segments.push_back(tmp_seg);
+                        tmp_seg = new Segment(); 
                     }
-                    tmp_s->attribute = current->coordinate.z;
-                    tmp_s->x = current->coordinate.x;
-                    tmp_s->y = current->coordinate.y;
+                    tmp_seg->attribute = current->coordinate.z;
+                    tmp_seg->x = current->coordinate.x;
+                    tmp_seg->y = current->coordinate.y;
                 }
                 current = current->prevertex;
             }
-            if(current->coordinate.z == 1){
-                net->vialist.emplace_back(current->coordinate.x, current->coordinate.y);
+            if(tmp_seg->x != current->coordinate.x || tmp_seg->y != current->coordinate.y){
+                if(tmp_seg->attribute == 0){
+                    tmp_seg->neighbor = current->coordinate.x;
+                }
+                else{
+                    tmp_seg->neighbor = current->coordinate.y;
+                }
+                if(tmp_seg != nullptr) tmp_path->segments.push_back(tmp_seg);
             }
-            if(tmp_s->attribute == 0){
-                net->segments.emplace_back(tmp_s->attribute, tmp_s->x, tmp_s->y, current->coordinate.x);
+        }
+
+        if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->is_sink){
+            if(current->coordinate == net->pins.at(tpn.first)){
+                // Pin location
+                tmp_path->start_pin = current->coordinate;
             }
             else{
-                net->segments.emplace_back(tmp_s->attribute, tmp_s->x, tmp_s->y, current->coordinate.y);
+                // Via location, set z to negative
+                tmp_path->start_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, -1);
             }
-            delete tmp_s;
-            // ::: Backtracking :::
         }
+        else{
+            if(current->coordinate.x == net->pins.at(tpn.first).x && current->coordinate.y == net->pins.at(tpn.first).y
+                    && (current->coordinate.z + 1) % 2 == net->pins.at(tpn.first).z){
+                // Pin location
+                tmp_path->start_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, (current->coordinate.z + 1) % 2);
+            }
+            else{
+                // Via location, set z to negative
+                tmp_path->start_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, -1);
+            }
+        }
+        // ::: Backtracking :::
         // Let the second point reset to not the sink
         this->grid->resetSinks(net->pins.at(tpn.second));
     }
