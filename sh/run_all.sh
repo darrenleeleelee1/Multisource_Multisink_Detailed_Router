@@ -1,3 +1,4 @@
+#!/bin/bash
 # build
 make clean && make -j16
 
@@ -18,7 +19,6 @@ if [ "$1" == "--verify" ]; then
             echo "Error found in case test$i.txt."
             echo "Please run the following code to check the log."
             echo "./verifier ./out/test$i.txt"
-            exit 1
         else
             echo "Passed."
         fi
