@@ -40,6 +40,8 @@ jobs:
         for i in {0..9}; do
           if grep -q "Error" ./artifacts/log$i.txt; then
             echo "Error found in case test$i.txt."
+            echo "Please run the following code to check the log."
+            echo "./verifier ./out/test$i.txt"
             exit 1
           else
               echo "Passed."
