@@ -1,9 +1,9 @@
-name: result
+name: verifier
 
 on: [push]
 
 jobs:
-  build_and_run_and_save:
+  verifier:
     runs-on: ubuntu-latest
 
     steps:
@@ -13,15 +13,10 @@ jobs:
     - name: mkdir artifacts
       run : mkdir artifacts
 
-    - name: load dependecy
-      run : pip3 install -r ${{ github.workspace }}/requirements.txt
-    
     - name: show dependency
       run: |
           echo "gcc path: $(which gcc)"
           echo "gcc version: $(gcc --version)"
-          echo "python3 path: $(which python3)"
-          echo "python3 version: $(python3 --version)"
 
     - name: create obj directory
       run: mkdir ${{ github.workspace }}/obj 
@@ -37,14 +32,19 @@ jobs:
         done
 
     - name: verify output
-      run:  python3 ${{ github.workspace }}/visual.py --dir ./artifacts/
-
-    
-    - name: save routing result
-      uses: actions/upload-artifact@v3
-      with:
-        name: routing_result
-        path: ${{ github.workspace }}/artifacts/*
+      run:  |
+        for i in {0..9}; do
+          echo "Running case test$i.txt."
+          ./verifier ./artifacts/test$i.txt > ./artifacts/log$i.txt
+        done
+        for i in {0..9}; do
+          if grep -q "Error" ./artifacts/log$i.txt; then
+            echo "Error found in case test$i.txt."
+            exit 1
+          else
+              echo "Passed."
+          fi
+        done
 
     - name: rm -rf artifacts
       run : rm -rf artifacts
