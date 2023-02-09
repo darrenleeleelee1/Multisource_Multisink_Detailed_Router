@@ -158,9 +158,6 @@ void Router::pin2pin_maze_routing(Net *net){
     }
 }
 void Router::tree2tree_maze_routing(Net *net){
-    if(net->id == 4){
-        int x = 10;
-    }
     for(auto &tpn : net->two_pins_net){
         Vertex *current;
         auto comp = [](const Vertex *lhs, const Vertex *rhs) {return lhs->distance > rhs->distance;};
@@ -182,7 +179,7 @@ void Router::tree2tree_maze_routing(Net *net){
         pq.push(this->grid->graph.at(net->pins.at(tpn.first).x)
             .at(net->pins.at(tpn.first).y).at(net->pins.at(tpn.first).z));
         for(auto &p : net->paths){
-            if(p->start_pin == net->pins.at(tpn.second) || p->end_pin == net->pins.at(tpn.second)){
+            if(p->start_pin == net->pins.at(tpn.first) || p->end_pin == net->pins.at(tpn.first)){
                 for(auto &s : p->segments){
                     if(s->attribute == 0){
                         for(int i = std::min(s->x, s->neighbor); i <= std::max(s->x, s->neighbor); i++){
@@ -295,25 +292,25 @@ void Router::tree2tree_maze_routing(Net *net){
             }
         }
 
-        if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->is_sink){
+        if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->distance == 0){
             if(current->coordinate == net->pins.at(tpn.first)){
                 // Pin location
-                tmp_path->start_pin = current->coordinate;
+                tmp_path->end_pin = current->coordinate;
             }
             else{
                 // Via location, set z to negative
-                tmp_path->start_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, -1);
+                tmp_path->end_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, -1);
             }
         }
         else{
             if(current->coordinate.x == net->pins.at(tpn.first).x && current->coordinate.y == net->pins.at(tpn.first).y
                     && (current->coordinate.z + 1) % 2 == net->pins.at(tpn.first).z){
                 // Pin location
-                tmp_path->start_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, (current->coordinate.z + 1) % 2);
+                tmp_path->end_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, (current->coordinate.z + 1) % 2);
             }
             else{
                 // Via location, set z to negative
-                tmp_path->start_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, -1);
+                tmp_path->end_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, -1);
             }
         }
         // ::: Backtracking :::
@@ -326,5 +323,20 @@ void Router::tree2tree_maze_routing(Net *net){
                 }
             }
         }
+
+        // for(int j = this->grid->graph.at(0).size()-1; j >= 0; j--){
+        //     for(unsigned i = 0; i < this->grid->graph.size(); i++){
+        //         std::cout << (this->grid->graph.at(i).at(j).at(0)->is_obstacle) << " ";
+        //     }
+        //     std::cout << "\n";
+        // }
+        // std::cout << "\n";
+        // for(int j = this->grid->graph.at(0).size()-1; j >= 0; j--){
+        //     for(unsigned i = 0; i < this->grid->graph.size(); i++){
+        //         std::cout << (this->grid->graph.at(i).at(j).at(1)->is_obstacle) << " ";
+        //     }
+        //     std::cout << "\n";
+        // }
+        // std::cout << "\n\n";
     }
 }
