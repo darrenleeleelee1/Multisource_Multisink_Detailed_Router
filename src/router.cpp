@@ -214,6 +214,7 @@ void Router::tree2tree_maze_routing(Net *net){
                 if(outOfBound(this, Coordinate3D{current->coordinate.x + x_orientation.at(i), current->coordinate.y+ y_orientation.at(i), i % 2})) continue;
                 if(this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->is_obstacle
                     && !(this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->is_sink)) continue;
+                // Via position need to check the other layer of current z whether is an obstacle
                 if(current->coordinate.z != (i % 2)){
                     if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_obstacle
                         && !(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_sink)) continue;
@@ -253,10 +254,11 @@ void Router::tree2tree_maze_routing(Net *net){
                 tmp_path->start_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, -1);
             }
         }
-
+        // source is stuck
         if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->distance == 0){
             std::cout << "Error: Net#" << net->id << " pin#" << tpn.first << "-pin#" << tpn.second << " routing failed.\n";
         }
+        // Not reach the sink
         else if(!this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->is_sink
                && !this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_sink){
             std::cout << "Error: Net#" << net->id << " pin#" << tpn.first << "-pin#" << tpn.second << " routing failed.\n";
@@ -331,20 +333,5 @@ void Router::tree2tree_maze_routing(Net *net){
                 }
             }
         }
-
-        // for(int j = this->grid->graph.at(0).size()-1; j >= 0; j--){
-        //     for(unsigned i = 0; i < this->grid->graph.size(); i++){
-        //         std::cout << (this->grid->graph.at(i).at(j).at(0)->is_obstacle) << " ";
-        //     }
-        //     std::cout << "\n";
-        // }
-        // std::cout << "\n";
-        // for(int j = this->grid->graph.at(0).size()-1; j >= 0; j--){
-        //     for(unsigned i = 0; i < this->grid->graph.size(); i++){
-        //         std::cout << (this->grid->graph.at(i).at(j).at(1)->is_obstacle) << " ";
-        //     }
-        //     std::cout << "\n";
-        // }
-        // std::cout << "\n\n";
     }
 }

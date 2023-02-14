@@ -68,6 +68,15 @@ public:
 			this->neighbor = std::max(_y, nei);
 		}
 	}
+	int getWirelength(){
+		if(attribute == 0){
+			return std::max(this->x, this->neighbor) - std::min(this->x, this->neighbor);
+		}
+		else if(attribute == 1){
+			return std::max(this->y, this->neighbor) - std::min(this->y, this->neighbor);
+		}
+		return 0;
+	}
 };
 class Path{
 public:
@@ -89,7 +98,6 @@ public:
 	std::vector<Coordinate3D> pins;
 	// For Ouput
 	std::set<Coordinate2D> vialist;
-	// std::vector<Segment> segments;
 	// Segment for drawing
 	std::vector<Segment_Draw> horizontal_segments;
 	std::vector<Segment_Draw> vertical_segments;
@@ -116,10 +124,18 @@ public:
 			delete p;
 		}
 	}
-
-	int getWirelength(){
-		// TODO compute the wirelength
+	int getCost(){
+		// TODO caculate
 		return 0;
+	}
+	int getWirelength(){
+		int sum = 0;
+		for(auto &p : this->paths){
+			for(auto &s : p->segments){
+				sum += s->getWirelength();
+			}
+		}
+		return sum;
 	}
 	// including adding via
 	void segmentRegularize(){

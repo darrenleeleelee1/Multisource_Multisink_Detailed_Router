@@ -12,7 +12,7 @@
         "args": ["./case/test1.txt", "./out/test1.txt"],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}/",
-        "environment": [],    
+        "environment": [],
         },
     ]
 }

@@ -14,7 +14,7 @@ int main(int argc, char const *argv[]){
     
     Router router(&layout);
     router.main();
-
+    
     std::cout << "Write Layout\n"; timer.setShortTerm();
     io::writeLayout(&layout, argv[2]);
     std::cout << "Write time: " << timer.getShortTerm() << "\n";
