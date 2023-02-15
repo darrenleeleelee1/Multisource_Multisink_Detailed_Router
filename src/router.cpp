@@ -1,6 +1,7 @@
 #include <queue>
 #include <cmath>
 #include <iostream>
+#include <algorithm>
 #include "router.hpp"
 std::vector<int> x_orientation = {1, 0, -1, 0};
 std::vector<int> y_orientation = {0, -1, 0, 1};
@@ -158,7 +159,9 @@ void Router::pin2pin_maze_routing(Net *net){
     }
 }
 void Router::tree2tree_maze_routing(Net *net){
-    for(auto &tpn : net->two_pins_net){
+    std::vector<std::pair<int, int>> longest_first = net->two_pins_net; // make a copy of the container
+    std::reverse(longest_first.begin(), longest_first.end()); 
+    for(auto &tpn : longest_first){
         Vertex *current;
         auto comp = [](const Vertex *lhs, const Vertex *rhs) {return lhs->distance > rhs->distance;};
         std::priority_queue<Vertex*, std::vector<Vertex*>, decltype(comp)> pq(comp);
