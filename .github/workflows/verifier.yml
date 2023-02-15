@@ -37,16 +37,20 @@ jobs:
           echo "Running case test$i.txt."
           ./verifier ./artifacts/test$i.txt > ./artifacts/log$i.txt
         done
+        not_pass_file=""
         for i in {0..99}; do
           if grep -q "Error" ./artifacts/log$i.txt; then
             echo "Error found in case test$i.txt."
             echo "Please run the following code to check the log."
             echo "./verifier ./out/test$i.txt"
-            exit 1
+            not_pass_file="$not_pass_file$i, "
           else
               echo "Passed."
           fi
         done
+        if [ -z not_pass_file ]; then
+          exit 1
+        fi
 
     - name: rm -rf artifacts
       run : rm -rf artifacts
