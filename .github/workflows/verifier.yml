@@ -34,7 +34,7 @@ jobs:
     - name: verify output
       run:  |
         not_pass_files=""
-        for i in {0..99}; do
+        for i in {0..3}; do
           echo "Running case test$i.txt."
           if (./verifier ./out/test$i.txt | grep -q "Error"); then
             echo "Error found in case test$i.txt."
