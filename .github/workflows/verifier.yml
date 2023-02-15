@@ -40,7 +40,7 @@ jobs:
             echo "Error found in case test$i.txt."
             echo "Please run the following code to check the log."
             echo "./verifier ./out/test$i.txt"
-            not_pass_file="$not_pass_file$i/"
+            not_pass_file="$not_pass_file$i//"
           fi
         done
         if [ -n $not_pass_file ]; then

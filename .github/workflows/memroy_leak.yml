@@ -43,7 +43,7 @@ jobs:
               echo "No memory leaks detected"
           else
               echo "Memory leaks detected!"
-              leaks_files="$leaks_files$i/"
+              leaks_files="$leaks_files$i//"
           fi
         done
         if [ -n $leaks_files ]; then
