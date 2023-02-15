@@ -36,12 +36,14 @@ jobs:
 
     - name: Verify Valgrind output
       run : |
+        leaks_files = ""
         for i in {0..99}; do 
           echo "Verifying case valgrind$i.out"
           if grep -q "ERROR SUMMARY: 0 errors" <<< "$(cat valgrind$i.out)"; then
               echo "No memory leaks detected"
           else
               echo "Memory leaks detected!"
+              leaks_files = "$leaks_file$i, "
               exit 1
           fi
         done
