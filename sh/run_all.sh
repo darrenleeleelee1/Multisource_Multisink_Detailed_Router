@@ -10,6 +10,7 @@ done
 
 # verify
 if [ "$1" == "--verify" ]; then
+    not_pass_files=""
     for i in {0..9}; do
         echo "Running case test$i.txt."
         ./verifier ./out/test$i.txt > ./out/log$i.txt
@@ -19,10 +20,14 @@ if [ "$1" == "--verify" ]; then
             echo "Error found in case test$i.txt."
             echo "Please run the following code to check the log."
             echo "./verifier ./out/test$i.txt"
+            not_pass_files="$not_pass_files$i, "
         else
             echo "Passed."
         fi
     done
+    if [ -n $not_pass_files]; then
+        echo $not_pass_files
+    fi
 fi
 
 

@@ -43,12 +43,13 @@ jobs:
             echo "Error found in case test$i.txt."
             echo "Please run the following code to check the log."
             echo "./verifier ./out/test$i.txt"
-            not_pass_file="$not_pass_file$i, "
+            not_pass_file="$not_pass_file$i/"
           else
               echo "Passed."
           fi
         done
-        if [ -z $not_pass_file ]; then
+        if [ -n $not_pass_file ]; then
+          echo "Failed at test{$not_pass_file}.txt"
           exit 1
         fi
 
