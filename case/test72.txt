@@ -1,0 +1,677 @@
+Width 50
+Height 50
+Layer 2
+Total_WL 963
+Obstacle_num 8
+46 33 0 49 34 0
+23 3 0 29 4 0
+29 20 0 34 21 0
+27 31 0 30 32 0
+46 7 1 47 15 1
+3 40 1 4 49 1
+36 18 1 37 25 1
+46 16 1 47 24 1
+Net_num 48
+Net_id 0
+pin_num 5
+38 34 0
+43 34 0
+49 35 0
+44 47 0
+49 47 0
+Via_num 7
+49 34
+49 35
+44 34
+44 47
+44 42
+49 42
+49 47
+H_segment_num 2
+38 34 0 50 35 0
+44 42 0 50 43 0
+V_segment_num 3
+44 34 1 45 48 1
+49 34 1 50 36 1
+49 42 1 50 48 1
+Net_id 1
+pin_num 5
+28 15 0
+36 15 0
+31 21 0
+35 1 0
+30 30 0
+Via_num 6
+31 15
+31 21
+35 15
+35 1
+30 15
+30 30
+H_segment_num 1
+28 15 0 37 16 0
+V_segment_num 3
+30 15 1 31 31 1
+31 15 1 32 22 1
+35 1 1 36 16 1
+Net_id 2
+pin_num 5
+30 35 0
+35 29 0
+14 34 0
+15 35 0
+31 36 0
+Via_num 7
+32 35
+32 30
+35 30
+35 29
+32 34
+31 30
+31 36
+H_segment_num 3
+31 30 0 36 31 0
+14 34 0 33 35 0
+15 35 0 33 36 0
+V_segment_num 3
+31 30 1 32 37 1
+32 30 1 33 36 1
+35 29 1 36 31 1
+Net_id 3
+pin_num 4
+1 46 0
+1 41 0
+6 47 0
+17 48 0
+Via_num 8
+0 46
+0 45
+1 45
+1 41
+1 49
+0 49
+0 47
+1 48
+H_segment_num 5
+0 45 0 2 46 0
+0 46 0 2 47 0
+0 47 0 7 48 0
+1 48 0 18 49 0
+0 49 0 2 50 0
+V_segment_num 3
+0 45 1 1 47 1
+0 47 1 1 50 1
+1 41 1 2 50 1
+Net_id 4
+pin_num 4
+31 26 0
+37 29 0
+36 39 0
+20 38 0
+Via_num 7
+36 26
+36 27
+37 27
+37 29
+36 29
+36 39
+36 38
+H_segment_num 4
+31 26 0 37 27 0
+36 27 0 38 28 0
+36 29 0 38 30 0
+20 38 0 37 39 0
+V_segment_num 3
+36 26 1 37 28 1
+36 29 1 37 40 1
+37 27 1 38 30 1
+Net_id 5
+pin_num 4
+48 47 0
+46 35 0
+33 34 0
+33 23 0
+Via_num 7
+47 47
+47 38
+46 38
+46 35
+33 35
+33 34
+33 23
+H_segment_num 3
+33 35 0 47 36 0
+46 38 0 48 39 0
+47 47 0 49 48 0
+V_segment_num 3
+33 23 1 34 36 1
+46 35 1 47 39 1
+47 38 1 48 48 1
+Net_id 6
+pin_num 4
+10 34 0
+5 23 0
+13 41 0
+0 42 0
+Via_num 7
+7 34
+7 23
+13 34
+13 41
+7 32
+0 32
+0 42
+H_segment_num 3
+5 23 0 8 24 0
+0 32 0 8 33 0
+7 34 0 14 35 0
+V_segment_num 3
+0 32 1 1 43 1
+7 23 1 8 35 1
+13 34 1 14 42 1
+Net_id 7
+pin_num 3
+5 27 0
+10 31 0
+1 28 0
+Via_num 3
+9 27
+9 31
+9 28
+H_segment_num 3
+5 27 0 10 28 0
+1 28 0 10 29 0
+9 31 0 11 32 0
+V_segment_num 1
+9 27 1 10 32 1
+Net_id 8
+pin_num 3
+46 0 0
+48 4 0
+32 3 0
+Via_num 3
+48 0
+48 4
+48 3
+H_segment_num 2
+46 0 0 49 1 0
+32 3 0 49 4 0
+V_segment_num 1
+48 0 1 49 5 1
+Net_id 9
+pin_num 3
+10 41 0
+2 41 0
+6 24 0
+Via_num 2
+6 41
+6 24
+H_segment_num 1
+2 41 0 11 42 0
+V_segment_num 1
+6 24 1 7 42 1
+Net_id 10
+pin_num 3
+38 48 0
+28 46 0
+49 48 0
+Via_num 4
+31 48
+31 49
+28 49
+28 46
+H_segment_num 2
+31 48 0 50 49 0
+28 49 0 32 50 0
+V_segment_num 2
+28 46 1 29 50 1
+31 48 1 32 50 1
+Net_id 11
+pin_num 3
+4 26 0
+0 31 0
+8 33 0
+Via_num 4
+0 26
+0 31
+8 31
+8 33
+H_segment_num 2
+0 26 0 5 27 0
+0 31 0 9 32 0
+V_segment_num 2
+0 26 1 1 32 1
+8 31 1 9 34 1
+Net_id 12
+pin_num 3
+37 42 0
+37 37 0
+48 30 0
+Via_num 3
+37 42
+37 37
+37 30
+H_segment_num 1
+37 30 0 49 31 0
+V_segment_num 1
+37 30 1 38 43 1
+Net_id 13
+pin_num 3
+34 28 0
+28 27 0
+28 42 0
+Via_num 3
+28 28
+28 27
+28 42
+H_segment_num 1
+28 28 0 35 29 0
+V_segment_num 1
+28 27 1 29 43 1
+Net_id 14
+pin_num 3
+25 12 0
+31 5 0
+29 21 0
+Via_num 4
+31 12
+31 5
+29 12
+29 21
+H_segment_num 1
+25 12 0 32 13 0
+V_segment_num 2
+29 12 1 30 22 1
+31 5 1 32 13 1
+Net_id 15
+pin_num 2
+9 5 0
+2 1 0
+Via_num 4
+0 5
+0 0
+2 0
+2 1
+H_segment_num 2
+0 0 0 3 1 0
+0 5 0 10 6 0
+V_segment_num 2
+0 0 1 1 6 1
+2 0 1 3 2 1
+Net_id 16
+pin_num 2
+12 26 0
+13 31 0
+Via_num 2
+13 26
+13 31
+H_segment_num 1
+12 26 0 14 27 0
+V_segment_num 1
+13 26 1 14 32 1
+Net_id 17
+pin_num 2
+5 33 0
+1 18 0
+Via_num 2
+1 33
+1 18
+H_segment_num 1
+1 33 0 6 34 0
+V_segment_num 1
+1 18 1 2 34 1
+Net_id 18
+pin_num 2
+11 11 0
+17 12 0
+Via_num 2
+11 11
+11 12
+H_segment_num 1
+11 12 0 18 13 0
+V_segment_num 1
+11 11 1 12 13 1
+Net_id 19
+pin_num 2
+22 41 0
+12 44 0
+Via_num 2
+19 41
+19 44
+H_segment_num 2
+19 41 0 23 42 0
+12 44 0 20 45 0
+V_segment_num 1
+19 41 1 20 45 1
+Net_id 20
+pin_num 2
+44 21 0
+33 10 0
+Via_num 2
+33 21
+33 10
+H_segment_num 1
+33 21 0 45 22 0
+V_segment_num 1
+33 10 1 34 22 1
+Net_id 21
+pin_num 2
+9 10 0
+22 10 0
+Via_num 0
+H_segment_num 1
+9 10 0 23 11 0
+V_segment_num 0
+Net_id 22
+pin_num 2
+5 14 0
+10 9 0
+Via_num 4
+8 14
+8 12
+10 12
+10 9
+H_segment_num 2
+8 12 0 11 13 0
+5 14 0 9 15 0
+V_segment_num 2
+8 12 1 9 15 1
+10 9 1 11 13 1
+Net_id 23
+pin_num 2
+38 43 0
+33 43 0
+Via_num 0
+H_segment_num 1
+33 43 0 39 44 0
+V_segment_num 0
+Net_id 24
+pin_num 2
+41 49 0
+33 47 0
+Via_num 2
+33 49
+33 47
+H_segment_num 1
+33 49 0 42 50 0
+V_segment_num 1
+33 47 1 34 50 1
+Net_id 25
+pin_num 2
+40 46 0
+38 40 0
+Via_num 6
+40 46
+40 47
+39 47
+39 46
+38 46
+38 40
+H_segment_num 2
+38 46 0 40 47 0
+39 47 0 41 48 0
+V_segment_num 3
+38 40 1 39 47 1
+39 46 1 40 48 1
+40 46 1 41 48 1
+Net_id 26
+pin_num 2
+15 9 0
+16 22 0
+Via_num 2
+16 9
+16 22
+H_segment_num 1
+15 9 0 17 10 0
+V_segment_num 1
+16 9 1 17 23 1
+Net_id 27
+pin_num 2
+4 6 0
+0 9 0
+Via_num 2
+0 6
+0 9
+H_segment_num 1
+0 6 0 5 7 0
+V_segment_num 1
+0 6 1 1 10 1
+Net_id 28
+pin_num 2
+10 17 0
+15 5 0
+Via_num 6
+13 17
+13 8
+14 8
+14 6
+15 6
+15 5
+H_segment_num 3
+14 6 0 16 7 0
+13 8 0 15 9 0
+10 17 0 14 18 0
+V_segment_num 3
+13 8 1 14 18 1
+14 6 1 15 9 1
+15 5 1 16 7 1
+Net_id 29
+pin_num 2
+2 12 0
+6 16 0
+Via_num 4
+0 12
+0 15
+4 15
+4 16
+H_segment_num 3
+0 12 0 3 13 0
+0 15 0 5 16 0
+4 16 0 7 17 0
+V_segment_num 2
+0 12 1 1 16 1
+4 15 1 5 17 1
+Net_id 30
+pin_num 2
+24 7 0
+33 7 0
+Via_num 0
+H_segment_num 1
+24 7 0 34 8 0
+V_segment_num 0
+Net_id 31
+pin_num 2
+35 24 0
+34 13 0
+Via_num 4
+35 24
+35 16
+34 16
+34 13
+H_segment_num 1
+34 16 0 36 17 0
+V_segment_num 2
+34 13 1 35 17 1
+35 16 1 36 25 1
+Net_id 32
+pin_num 2
+47 2 0
+43 0 0
+Via_num 2
+45 2
+45 0
+H_segment_num 2
+43 0 0 46 1 0
+45 2 0 48 3 0
+V_segment_num 1
+45 0 1 46 3 1
+Net_id 33
+pin_num 2
+4 23 0
+6 6 0
+Via_num 4
+4 23
+4 20
+6 20
+6 6
+H_segment_num 1
+4 20 0 7 21 0
+V_segment_num 2
+4 20 1 5 24 1
+6 6 1 7 21 1
+Net_id 34
+pin_num 2
+12 23 0
+19 23 0
+Via_num 0
+H_segment_num 1
+12 23 0 20 24 0
+V_segment_num 0
+Net_id 35
+pin_num 2
+34 23 0
+37 12 0
+Via_num 4
+34 23
+34 17
+37 17
+37 12
+H_segment_num 1
+34 17 0 38 18 0
+V_segment_num 2
+34 17 1 35 24 1
+37 12 1 38 18 1
+Net_id 36
+pin_num 2
+31 10 0
+27 10 0
+Via_num 0
+H_segment_num 1
+27 10 0 32 11 0
+V_segment_num 0
+Net_id 37
+pin_num 2
+4 40 0
+1 39 0
+Via_num 2
+1 40
+1 39
+H_segment_num 1
+1 40 0 5 41 0
+V_segment_num 1
+1 39 1 2 41 1
+Net_id 38
+pin_num 2
+37 36 0
+30 41 0
+Via_num 4
+32 36
+32 39
+31 39
+31 41
+H_segment_num 3
+32 36 0 38 37 0
+31 39 0 33 40 0
+30 41 0 32 42 0
+V_segment_num 2
+31 39 1 32 42 1
+32 36 1 33 40 1
+Net_id 39
+pin_num 2
+29 8 0
+34 8 0
+Via_num 0
+H_segment_num 1
+29 8 0 35 9 0
+V_segment_num 0
+Net_id 40
+pin_num 2
+11 14 0
+2 10 0
+Via_num 4
+9 14
+9 11
+0 11
+0 10
+H_segment_num 3
+0 10 0 3 11 0
+0 11 0 10 12 0
+9 14 0 12 15 0
+V_segment_num 2
+0 10 1 1 12 1
+9 11 1 10 15 1
+Net_id 41
+pin_num 2
+21 0 0
+31 2 0
+Via_num 2
+31 0
+31 2
+H_segment_num 1
+21 0 0 32 1 0
+V_segment_num 1
+31 0 1 32 3 1
+Net_id 42
+pin_num 2
+0 21 0
+4 21 0
+Via_num 0
+H_segment_num 1
+0 21 0 5 22 0
+V_segment_num 0
+Net_id 43
+pin_num 2
+30 1 0
+39 2 0
+Via_num 2
+34 1
+34 2
+H_segment_num 2
+30 1 0 35 2 0
+34 2 0 40 3 0
+V_segment_num 1
+34 1 1 35 3 1
+Net_id 44
+pin_num 2
+20 13 0
+27 1 0
+Via_num 4
+21 13
+21 12
+22 12
+22 1
+H_segment_num 3
+22 1 0 28 2 0
+21 12 0 23 13 0
+20 13 0 22 14 0
+V_segment_num 2
+21 12 1 22 14 1
+22 1 1 23 13 1
+Net_id 45
+pin_num 2
+12 38 0
+16 38 0
+Via_num 0
+H_segment_num 1
+12 38 0 17 39 0
+V_segment_num 0
+Net_id 46
+pin_num 2
+38 7 0
+44 10 0
+Via_num 2
+39 7
+39 10
+H_segment_num 2
+38 7 0 40 8 0
+39 10 0 45 11 0
+V_segment_num 1
+39 7 1 40 11 1
+Net_id 47
+pin_num 2
+12 15 0
+20 15 0
+Via_num 0
+H_segment_num 1
+12 15 0 21 16 0
+V_segment_num 0

@@ -26,18 +26,18 @@ jobs:
 
     - name: run Router
       run:  |
-        for i in {0..9}; do
+        for i in {0..99}; do
           echo "Running case test$i.txt"
           ${{ github.workspace }}/router ${{ github.workspace }}/case/test$i.txt ${{ github.workspace }}/artifacts/test$i.txt
         done
 
     - name: verify output
       run:  |
-        for i in {0..9}; do
+        for i in {0..99}; do
           echo "Running case test$i.txt."
           ./verifier ./artifacts/test$i.txt > ./artifacts/log$i.txt
         done
-        for i in {0..9}; do
+        for i in {0..99}; do
           if grep -q "Error" ./artifacts/log$i.txt; then
             echo "Error found in case test$i.txt."
             echo "Please run the following code to check the log."

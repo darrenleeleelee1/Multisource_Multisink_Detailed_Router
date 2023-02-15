@@ -7,6 +7,11 @@ public:
 	Coordinate3D(){}
 	Coordinate3D(int _x, int  _y, int  _z) : x(_x), y(_y), z(_z) {}
 	~Coordinate3D(){}
+	std::string toString(){
+		std::string tmp = "";
+		tmp += "(" + std::to_string(this->x) + "," + std::to_string(this->y) + "," + std::to_string(this->z) + ")";
+		return tmp;
+	}
 	bool operator==(const Coordinate3D &other) const {
     	return this->x == other.x && this->y == other.y && this->z == other.z;
     }
@@ -17,6 +22,11 @@ public:
 	Coordinate2D(){}
 	Coordinate2D(int _x, int  _y) : x(_x), y(_y) {}
 	~Coordinate2D(){}
+	std::string toString(){
+		std::string tmp = "";
+		tmp += "(" + std::to_string(this->x) + "," + std::to_string(this->y) + ")";
+		return tmp;
+	}
 	bool operator==(const Coordinate2D &other) const {
     	return this->x == other.x && this->y == other.y;
     }
@@ -125,7 +135,7 @@ public:
 		}
 	}
 	int getCost(){
-		// TODO caculate
+		// TODO: caculate
 		return 0;
 	}
 	int getWirelength(){

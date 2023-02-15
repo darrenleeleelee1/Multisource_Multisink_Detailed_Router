@@ -37,13 +37,17 @@ void Router::main(){
     });
 
     for(auto &n : this->layout->netlist){
-        // Because Router constructor mark all the net pins to obstacle
-        // Mark current net pins not a obstacle
-        this->grid->resetObstacles(n.pins);
-        // this->pin2pin_maze_routing(&n);
-        this->tree2tree_maze_routing(&n);
-        // When this net route success, turn the net pins into obstacles
-        this->grid->setObstacles(n.pins);
+        for(auto &tpn : n.two_pins_net){
+            // Because Router constructor mark all the net pins to obstacle
+            // Mark current net pins not a obstacle
+            this->grid->resetObstacles(n.pins);
+            // this->pin2pin_maze_routing(&n, n.pins.at(tpn.first), n.pins.at(tpn.second));
+            if(!this->tree2tree_maze_routing(&n, n.pins.at(tpn.first), n.pins.at(tpn.second))){
+                // TODO: need reroute
+            }
+            // When this net route success, turn the net pins into obstacles
+            this->grid->setObstacles(n.pins);
+        }
     }
 
 }
