@@ -33,18 +33,18 @@ jobs:
 
     - name: verify output
       run:  |
-        not_pass_file=""
+        not_pass_files=""
         for i in {0..99}; do
           echo "Running case test$i.txt."
           if (./verifier ./out/test$i.txt | grep -q "Error"); then
             echo "Error found in case test$i.txt."
             echo "Please run the following code to check the log."
             echo "./verifier ./out/test$i.txt"
-            not_pass_file="$not_pass_file$i, "
+            not_pass_files="$not_pass_files$i, "
           fi
         done
-        if [ -n $not_pass_file ]; then
-          echo "Failed at test{$not_pass_file}.txt"
+        if [ -n "$not_pass_files" ]; then
+          echo "Failed at test{$not_pass_files}.txt"
           exit 1
         fi
 

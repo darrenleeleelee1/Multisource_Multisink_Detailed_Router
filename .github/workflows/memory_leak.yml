@@ -46,7 +46,7 @@ jobs:
               leaks_files="$leaks_files$i, "
           fi
         done
-        if [ -n $leaks_files ]; then
+        if [ -n "$leaks_files" ]; then
           echo "Error on test{$leaks_files}.txt"
           exit 1
         fi

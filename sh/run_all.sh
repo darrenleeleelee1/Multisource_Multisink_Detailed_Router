@@ -22,8 +22,8 @@ if [ "$1" == "--verify" ]; then
             echo "Passed."
         fi
     done
-    if [ -n $not_pass_files ]; then
-        echo $not_pass_files
+    if [ -n "$not_pass_files" ]; then
+        echo "Failed at test{$not_pass_files}.txt"
     fi
 fi
 
