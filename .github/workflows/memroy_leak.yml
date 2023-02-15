@@ -46,7 +46,7 @@ jobs:
               leaks_files="$leaks_file$i, "
           fi
         done
-        if [ -z leaks_files]; then
+        if [ -z $leaks_files]; then
           exit 1
         fi
 

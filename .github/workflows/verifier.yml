@@ -48,7 +48,7 @@ jobs:
               echo "Passed."
           fi
         done
-        if [ -z not_pass_file ]; then
+        if [ -z $not_pass_file ]; then
           exit 1
         fi
 
