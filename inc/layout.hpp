@@ -63,11 +63,11 @@ public:
 };
 class Segment{
 public:
-	int attribute; // 0 for horizon, 1 for verticle
 	int x, y, neighbor;
+	int z; // 0 for horizon, 1 for verticle
 	Segment(){}
-	Segment(int _attr, int _x, int _y, int nei) : attribute(_attr){
-		if(_attr == 0){
+	Segment(int _z, int _x, int _y, int nei) : z(_z){
+		if(_z == 0){
 			this->x = std::min(_x, nei);
 			this->y = _y;
 			this->neighbor = std::max(_x, nei);
@@ -78,11 +78,42 @@ public:
 			this->neighbor = std::max(_y, nei);
 		}
 	}
+	int getX(){
+		if(this->z == 0) return std::min(this->x, this->neighbor);
+		else return this->x;
+	}
+	int getY(){
+		if(this->z == 1) return std::min(this->y, this->neighbor);
+		else return this->y;
+	}
+	int getNeighbor(){
+		if(this->z == 0) return std::max(this->x, this->neighbor);
+		else if(this->z == 1) return std::max(this->y, this->neighbor);
+		else return this->neighbor;
+	}
+	Coordinate3D startPoint(){
+		if(this->z == 0) return Coordinate3D{this->getX(), this->getY(), this->z};
+		else return Coordinate3D{this->getX(), this->getY(), this->z};
+	}
+	Coordinate3D endPoint(){
+		if(this->z == 0) return Coordinate3D{this->getNeighbor(), this->getY(), this->z};
+		else return Coordinate3D{this->getX(), this->getNeighbor(), this->z};
+	}
+	std::string toString(){
+		if(this->z == 0) {
+			return "(" + std::to_string(this->getX()) + "," + std::to_string(this->getY()) + "," + std::to_string(this->z) + ")"
+					+ "-(" + std::to_string(this->getNeighbor()) + "," + std::to_string(this->getY()) + "," + std::to_string(this->z) + ")";
+		}
+		else{
+			return "(" + std::to_string(this->getX()) + "," + std::to_string(this->getY()) + "," + std::to_string(this->z) + ")"
+					+ "-(" + std::to_string(this->getX()) + "," + std::to_string(this->getNeighbor()) + "," + std::to_string(this->z) + ")";
+		}
+	}
 	int getWirelength(){
-		if(attribute == 0){
+		if(z == 0){
 			return std::max(this->x, this->neighbor) - std::min(this->x, this->neighbor);
 		}
-		else if(attribute == 1){
+		else if(z == 1){
 			return std::max(this->y, this->neighbor) - std::min(this->y, this->neighbor);
 		}
 		return 0;
@@ -150,31 +181,38 @@ public:
 	// including adding via
 	void segmentRegularize(){
 		for(auto &p : this->paths){
-			for(auto &s : p->segments){
-				if(s->attribute == 0){
-					this->horizontal_segments.emplace_back(s->x, s->y, s->attribute
-						, s->neighbor, s->y, s->attribute);
-
-					bool first_pin_is_via = true, second_pin_is_via = true;
-					for(auto &pin : this->pins){
-						if(pin == Coordinate3D(s->x, s->y, s->attribute)) first_pin_is_via = false;
-						if(pin == Coordinate3D(s->neighbor, s->y, s->attribute)) second_pin_is_via = false;
-					}
-					if(first_pin_is_via) this->vialist.emplace(s->x, s->y);
-					if(second_pin_is_via) this->vialist.emplace(s->neighbor, s->y);
-					
+			if(p->segments.size() == 0){
+				if(p->start_pin == p->end_pin){
+					this->vialist.emplace(p->start_pin.x, p->start_pin.y);
 				}
-				else{
-					this->vertical_segments.emplace_back(s->x, s->y, s->attribute
-						, s->x, s->neighbor, s->attribute);
+			}
+			else{
+				for(auto &s : p->segments){
+					if(s->z == 0){
+						this->horizontal_segments.emplace_back(s->x, s->y, s->z
+							, s->neighbor, s->y, s->z);
 
-					bool first_pin_is_via = true, second_pin_is_via = true;
-					for(auto &pin : this->pins){
-						if(pin == Coordinate3D(s->x, s->y, s->attribute)) first_pin_is_via = false;
-						if(pin == Coordinate3D(s->x, s->neighbor, s->attribute)) second_pin_is_via = false;
+						bool first_pin_is_via = true, second_pin_is_via = true;
+						for(auto &pin : this->pins){
+							if(pin == Coordinate3D(s->x, s->y, s->z)) first_pin_is_via = false;
+							if(pin == Coordinate3D(s->neighbor, s->y, s->z)) second_pin_is_via = false;
+						}
+						if(first_pin_is_via) this->vialist.emplace(s->x, s->y);
+						if(second_pin_is_via) this->vialist.emplace(s->neighbor, s->y);
+						
 					}
-					if(first_pin_is_via) this->vialist.emplace(s->x, s->y);
-					if(second_pin_is_via) this->vialist.emplace(s->x, s->neighbor);
+					else{
+						this->vertical_segments.emplace_back(s->x, s->y, s->z
+							, s->x, s->neighbor, s->z);
+
+						bool first_pin_is_via = true, second_pin_is_via = true;
+						for(auto &pin : this->pins){
+							if(pin == Coordinate3D(s->x, s->y, s->z)) first_pin_is_via = false;
+							if(pin == Coordinate3D(s->x, s->neighbor, s->z)) second_pin_is_via = false;
+						}
+						if(first_pin_is_via) this->vialist.emplace(s->x, s->y);
+						if(second_pin_is_via) this->vialist.emplace(s->x, s->neighbor);
+					}
 				}
 			}
 		}

@@ -5,14 +5,18 @@
 class Vertex{
 public:
     Coordinate3D coordinate;
+    std::vector<Segment*> cur_segments;
     Vertex *prevertex = nullptr;
     int distance = INT32_MAX;
-    bool is_obstacle = false;
+    int obstacle = -1;
     bool is_sink = false;
     Vertex(){}
     Vertex(int x, int y, int z, bool o, bool s) 
-        : coordinate(x, y, z), is_obstacle(o), is_sink(s) {}
+        : coordinate(x, y, z), obstacle(-1), is_sink(s) {}
     ~Vertex() {}
+    bool isObstacle(){
+        return obstacle != -1 ? true : false;
+    }
 };
 class Grid{
 public:
@@ -68,56 +72,68 @@ public:
         this->graph.at(coor.x).at(coor.y).at(coor.z)->distance = 0;
     }
     void setDistanceZero(Segment seg){
-        if(seg.attribute == 0){
+        if(seg.z == 0){
             for(int i = std::min(seg.x, seg.neighbor); i <= std::max(seg.x, seg.neighbor); i++){
-                this->graph.at(i).at(seg.y).at(seg.attribute)->distance = 0;
+                this->graph.at(i).at(seg.y).at(seg.z)->distance = 0;
             }
         }
         else{
             for(int i = std::min(seg.y, seg.neighbor); i <= std::max(seg.y, seg.neighbor); i++){
-                this->graph.at(seg.x).at(i).at(seg.attribute)->distance = 0;
+                this->graph.at(seg.x).at(i).at(seg.z)->distance = 0;
             }
         }
     }
-    void setObstacles(Coordinate3D start_point, Coordinate3D end_point){
+    void setObstacles(int net_id, Coordinate3D start_point, Coordinate3D end_point){
         // pins
         if(start_point == end_point){
-            this->graph.at(start_point.x).at(start_point.y).at(start_point.z)->is_obstacle = true;
+            this->graph.at(start_point.x).at(start_point.y).at(start_point.z)->obstacle = net_id;
         }
         else{
             // Horizontal
             if(start_point.y == end_point.y){
                 for(int i = std::min(start_point.x, end_point.x); i <= std::max(start_point.x, end_point.x); i++){
-                    this->graph.at(i).at(start_point.y).at(start_point.z)->is_obstacle = true;
+                    this->graph.at(i).at(start_point.y).at(start_point.z)->obstacle = net_id;
                 }
             }
             // Verticle
             else if(start_point.x == end_point.x){
                 for(int i = std::min(start_point.y, end_point.y); i <= std::max(start_point.y, end_point.y); i++){
-                    this->graph.at(start_point.x).at(i).at(start_point.z)->is_obstacle = true;
+                    this->graph.at(start_point.x).at(i).at(start_point.z)->obstacle = net_id;
                 }
             }
         }
     }
-    void setObstacles(std::vector<Coordinate3D> pins){
+    void setObstacles(int net_id, std::vector<Coordinate3D> pins){
         for(auto v : pins){
-            this->graph.at(v.x).at(v.y).at(v.z)->is_obstacle = true;
+            this->graph.at(v.x).at(v.y).at(v.z)->obstacle = net_id;
         }
     }
-    void resetObstacles(std::vector<Coordinate3D> pins){
-        for(auto v : pins){
-            this->graph.at(v.x).at(v.y).at(v.z)->is_obstacle = false;
-        }
-    }
-    void setSinks(Segment seg){
-        if(seg.attribute == 0){
+    void resetObstacles(Segment seg){
+        if(seg.z == 0){
             for(int i = std::min(seg.x, seg.neighbor); i <= std::max(seg.x, seg.neighbor); i++){
-                this->graph.at(i).at(seg.y).at(seg.attribute)->is_sink = true;
+                this->graph.at(i).at(seg.y).at(seg.z)->obstacle = -1;
             }
         }
         else{
             for(int i = std::min(seg.y, seg.neighbor); i <= std::max(seg.y, seg.neighbor); i++){
-                this->graph.at(seg.x).at(i).at(seg.attribute)->is_sink = true;
+                this->graph.at(seg.x).at(i).at(seg.z)->obstacle = -1;
+            }
+        }
+    }
+    void resetObstacles(std::vector<Coordinate3D> pins){
+        for(auto v : pins){
+            this->graph.at(v.x).at(v.y).at(v.z)->obstacle = -1;
+        }
+    }
+    void setSinks(Segment seg){
+        if(seg.z == 0){
+            for(int i = std::min(seg.x, seg.neighbor); i <= std::max(seg.x, seg.neighbor); i++){
+                this->graph.at(i).at(seg.y).at(seg.z)->is_sink = true;
+            }
+        }
+        else{
+            for(int i = std::min(seg.y, seg.neighbor); i <= std::max(seg.y, seg.neighbor); i++){
+                this->graph.at(seg.x).at(i).at(seg.z)->is_sink = true;
             }
         }
     }
@@ -130,14 +146,14 @@ public:
         }
     }
     void resetSinks(Segment seg){
-        if(seg.attribute == 0){
+        if(seg.z == 0){
             for(int i = std::min(seg.x, seg.neighbor); i <= std::max(seg.x, seg.neighbor); i++){
-                this->graph.at(i).at(seg.y).at(seg.attribute)->is_sink = false;
+                this->graph.at(i).at(seg.y).at(seg.z)->is_sink = false;
             }
         }
         else{
             for(int i = std::min(seg.y, seg.neighbor); i <= std::max(seg.y, seg.neighbor); i++){
-                this->graph.at(seg.x).at(i).at(seg.attribute)->is_sink = false;
+                this->graph.at(seg.x).at(i).at(seg.z)->is_sink = false;
             }
         }
     }
