@@ -41,9 +41,15 @@ void Router::main(){
             // Because Router constructor mark all the net pins to obstacle
             // Mark current net pins not a obstacle
             this->grid->resetObstacles(n.pins);
-            // this->pin2pin_maze_routing(&n, n.pins.at(tpn.first), n.pins.at(tpn.second));
-            if(!this->tree2tree_maze_routing(&n, n.pins.at(tpn.first), n.pins.at(tpn.second))){
-                // TODO: need reroute
+            int reroute_state = 0; // 1 means source stuck, 2 means sink stuck
+            if(!this->pin2pin_maze_routing(&n, n.pins.at(tpn.first), n.pins.at(tpn.second), reroute_state)){
+                // bool reroute_success = false;
+                // Coordinate3D &reroute_node = (reroute_state == 1 ? n.pins.at(tpn.first) : n.pins.at(tpn.second));
+                // for(int i = 0; i < 4; i++){
+                //     if(outOfBound(Coordinate3D{reroute_node.x + this->x_orientation.at(i), reroute_node.y+ this->y_orientation.at(i), i % 2})) continue;
+                //     // TODO: Check four direction that which is segment(only if not a pins, if could be reroute)
+                    
+                // }
             }
             // When this net route success, turn the net pins into obstacles
             this->grid->setObstacles(n.pins);

@@ -30,6 +30,5 @@ fi
 
 # draw
 if [ "$2" == "--draw" ]; then
-    rm ./out/log**
     python3 visual.py --dir ./out
 fi

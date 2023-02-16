@@ -7,6 +7,8 @@ class Router
 public:
     Layout *layout;
     Grid *grid;
+    static const std::vector<int> x_orientation;
+    static const std::vector<int> y_orientation;
     Router() {}
     Router(Layout *l) {
         this->layout = l;
@@ -24,6 +26,8 @@ public:
 
     void main();
     void twoPinNetDecomposition();
-    bool pin2pin_maze_routing(Net *net, Coordinate3D source_node, Coordinate3D sink_node);
-    bool tree2tree_maze_routing(Net *net, Coordinate3D source_node, Coordinate3D sink_node);
+    bool outOfBound(Coordinate3D p);
+    bool pin2pin_maze_routing(Net *net, Coordinate3D source_node, Coordinate3D sink_node, int &reroute_status);
+    bool tree2tree_maze_routing(Net *net, Coordinate3D source_node, Coordinate3D sink_node, int &reroute_status);
 };
+

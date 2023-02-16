@@ -2,8 +2,8 @@
 #include <cmath>
 #include <iostream>
 #include "router.hpp"
-std::vector<int> x_orientation = {1, 0, -1, 0};
-std::vector<int> y_orientation = {0, -1, 0, 1};
+const std::vector<int> Router::x_orientation = {1, 0, -1, 0};
+const std::vector<int> Router::y_orientation = {0, -1, 0, 1};
 int maze_route_cost(Router *R, Coordinate3D sp, Coordinate3D ep){
     int cost = 0;
     if(sp.z != ep.z){
@@ -12,9 +12,9 @@ int maze_route_cost(Router *R, Coordinate3D sp, Coordinate3D ep){
     cost += std::abs(sp.x - ep.x) * R->layout->horizontal_segment_cost + std::abs(sp.y - ep.y) * R->layout->vertical_segment_cost;
     return cost;
 }
-bool outOfBound(Router *R, Coordinate3D p){
-    if(p.x < 0 || p.x > R->layout->width) return true;
-    else if(p.y < 0 || p.y > R->layout->height) return true;
+bool Router::outOfBound(Coordinate3D p){
+    if(p.x < 0 || p.x > this->layout->width) return true;
+    else if(p.y < 0 || p.y > this->layout->height) return true;
     else return false;
 }
 void Router::twoPinNetDecomposition(){
@@ -23,7 +23,7 @@ void Router::twoPinNetDecomposition(){
             , this->layout->horizontal_segment_cost, this->layout->vertical_segment_cost);
     }
 }
-bool Router::pin2pin_maze_routing(Net *net, Coordinate3D source_node, Coordinate3D sink_node){
+bool Router::pin2pin_maze_routing(Net *net, Coordinate3D source_node, Coordinate3D sink_node, int &reroute_status){
     bool success = true;
     Vertex *current;
     auto comp = [](const Vertex *lhs, const Vertex *rhs) {return lhs->distance > rhs->distance;};
@@ -49,15 +49,19 @@ bool Router::pin2pin_maze_routing(Net *net, Coordinate3D source_node, Coordinate
         }
         // Enumerate 4 directions
         for(int i = 0; i < 4; i++){
-            if(outOfBound(this, Coordinate3D{current->coordinate.x + x_orientation.at(i), current->coordinate.y+ y_orientation.at(i), i % 2})) continue;
-            if(this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->is_obstacle
-                && !(this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->is_sink)) continue;
-            if(current ->distance + maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x + x_orientation.at(i), current->coordinate.y + y_orientation.at(i), i % 2})
-                    < this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->distance){
-                this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->prevertex = current;
-                this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->distance 
-                    = current ->distance + maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x + x_orientation.at(i), current->coordinate.y + y_orientation.at(i), i % 2}); 
-                pq.push(this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2));
+            if(outOfBound(Coordinate3D{current->coordinate.x + this->x_orientation.at(i), current->coordinate.y+ this->y_orientation.at(i), i % 2})) continue;
+            if(this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2)->is_obstacle
+                && !(this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2)->is_sink)) continue;
+            if(current->coordinate.z != (i % 2)){
+                if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_obstacle
+                    && !(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_sink)) continue;
+            }
+            if(current ->distance + maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x + this->x_orientation.at(i), current->coordinate.y + this->y_orientation.at(i), i % 2})
+                    < this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2)->distance){
+                this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2)->prevertex = current;
+                this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2)->distance 
+                    = current ->distance + maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x + this->x_orientation.at(i), current->coordinate.y + this->y_orientation.at(i), i % 2}); 
+                pq.push(this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2));
             }
                 
         }
@@ -158,7 +162,7 @@ bool Router::pin2pin_maze_routing(Net *net, Coordinate3D source_node, Coordinate
     this->grid->resetSinks(sink_node);
     return success; // source_node to sink_node have paths
 }
-bool Router::tree2tree_maze_routing(Net *net, Coordinate3D source_node, Coordinate3D sink_node){
+bool Router::tree2tree_maze_routing(Net *net, Coordinate3D source_node, Coordinate3D sink_node, int &reroute_status){
     bool success = true;
 
     Vertex *current;
@@ -213,19 +217,19 @@ bool Router::tree2tree_maze_routing(Net *net, Coordinate3D source_node, Coordina
         }
         // Enumerate 4 directions
         for(int i = 0; i < 4; i++){
-            if(outOfBound(this, Coordinate3D{current->coordinate.x + x_orientation.at(i), current->coordinate.y+ y_orientation.at(i), i % 2})) continue;
-            if(this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->is_obstacle
-                && !(this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->is_sink)) continue;
+            if(outOfBound(Coordinate3D{current->coordinate.x + this->x_orientation.at(i), current->coordinate.y+ this->y_orientation.at(i), i % 2})) continue;
+            if(this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2)->is_obstacle
+                && !(this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2)->is_sink)) continue;
             if(current->coordinate.z != (i % 2)){
                 if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_obstacle
                     && !(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_sink)) continue;
             }
-            if(current ->distance + maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x + x_orientation.at(i), current->coordinate.y + y_orientation.at(i), i % 2})
-                    < this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->distance){
-                this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->prevertex = current;
-                this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2)->distance 
-                    = current ->distance + maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x + x_orientation.at(i), current->coordinate.y + y_orientation.at(i), i % 2}); 
-                pq.push(this->grid->graph.at(current->coordinate.x + x_orientation.at(i)).at(current->coordinate.y + y_orientation.at(i)).at(i % 2));
+            if(current ->distance + maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x + this->x_orientation.at(i), current->coordinate.y + this->y_orientation.at(i), i % 2})
+                    < this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2)->distance){
+                this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2)->prevertex = current;
+                this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2)->distance 
+                    = current ->distance + maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x + this->x_orientation.at(i), current->coordinate.y + this->y_orientation.at(i), i % 2}); 
+                pq.push(this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2));
             }
         }
     }
@@ -259,11 +263,13 @@ bool Router::tree2tree_maze_routing(Net *net, Coordinate3D source_node, Coordina
     if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->distance == 0){
         std::cout << "Error: Net#" << net->id << " " << source_node.toString() << "-" << sink_node.toString() << " routing failed.\n";
         success = false;
+        reroute_status = 1;
     }
     else if(!this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->is_sink
             && !this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_sink){
         std::cout << "Error: Net#" << net->id << " " << source_node.toString() << "-" << sink_node.toString() << " routing failed.\n";
         success = false;
+        reroute_status = 2;
     }
     else{
         Segment *tmp_seg = nullptr;

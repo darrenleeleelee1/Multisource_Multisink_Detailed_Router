@@ -43,7 +43,6 @@ jobs:
             not_pass_files="$not_pass_files$i, "
           fi
         done
-        echo $not_pass_files
         if [ -n "$not_pass_files" ]; then
           echo "Failed at test{$not_pass_files}.txt"
           exit 1
