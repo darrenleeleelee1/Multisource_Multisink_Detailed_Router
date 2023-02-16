@@ -42,7 +42,7 @@ void Router::main(){
             // Mark current net pins not a obstacle
             this->grid->resetObstacles(n.pins);
             int reroute_state = 0; // 1 means source stuck, 2 means sink stuck
-            if(!this->pin2pin_maze_routing(&n, n.pins.at(tpn.first), n.pins.at(tpn.second), reroute_state)){
+            if(!this->tree2tree_maze_routing(&n, n.pins.at(tpn.first), n.pins.at(tpn.second), reroute_state)){
                 // bool reroute_success = false;
                 // Coordinate3D &reroute_node = (reroute_state == 1 ? n.pins.at(tpn.first) : n.pins.at(tpn.second));
                 // for(int i = 0; i < 4; i++){
