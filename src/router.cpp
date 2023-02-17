@@ -95,7 +95,7 @@ bool Router::pin2pin_maze_routing(Net *net, Coordinate3D source_node, Coordinate
     }
 
     if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->distance == 0){
-        std::cout << "Error: Net#" << net->id << " " << source_node.toString() << "-" << sink_node.toString() << " routing failed.\n";
+        std::cout << "Failed: Net#" << net->id << " " << source_node.toString() << "-" << sink_node.toString() << " routing failed.\n";
         success = false; // 
     }
     else{
@@ -262,7 +262,7 @@ bool Router::tree2tree_maze_routing(Net *net, Coordinate3D source_node, Coordina
 
     if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->distance == 0){
         if(!this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_sink){
-            std::cout << "Error: Net#" << net->id << " " << source_node.toString() << "-" << sink_node.toString() << " routing failed.\n";
+            std::cout << "Failed: Net#" << net->id << " " << source_node.toString() << "-" << sink_node.toString() << " routing failed.\n";
             success = false;
             reroute_status = 1;
 
@@ -270,7 +270,7 @@ bool Router::tree2tree_maze_routing(Net *net, Coordinate3D source_node, Coordina
     }
     else if(!this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->is_sink
             && !this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_sink){
-        std::cout << "Error: Net#" << net->id << " " << source_node.toString() << "-" << sink_node.toString() << " routing failed.\n";
+        std::cout << "Failed: Net#" << net->id << " " << source_node.toString() << "-" << sink_node.toString() << " routing failed.\n";
         success = false;
         reroute_status = 2;
     }

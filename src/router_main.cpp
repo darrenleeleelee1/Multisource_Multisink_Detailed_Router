@@ -40,7 +40,7 @@ void Router::main(){
         for(auto &tpn : n.two_pins_net){
             int reroute_state = 0; // 1 means source stuck, 2 means sink stuck
             if(!this->tree2tree_maze_routing(&n, n.pins.at(tpn.first), n.pins.at(tpn.second), reroute_state)){
-                bool reroute_candidate = false;
+                bool find_reroute_candidate = false;
                 Coordinate3D &reroute_node = (reroute_state == 1 ? n.pins.at(tpn.first) : n.pins.at(tpn.second));
                 for(int i = 0; i < 4; i++){
                     if(outOfBound(Coordinate3D{reroute_node.x + this->x_orientation.at(i), reroute_node.y+ this->y_orientation.at(i), i % 2})) continue;
@@ -58,31 +58,30 @@ void Router::main(){
                                     if (*s == *cs) {
                                         std::cout << "Find segment\n";
                                         std::cout << "Rip-up Net#" << next_vertex->obstacle << " " << (*cs)->toString() << "\n";
-                                        
+                                        int reroute_net_id = next_vertex->obstacle;
                                         this->grid->resetObstacles(**cs);
                                         // If the segment is found, erase s from the vector
                                         p->segments.erase(s);
                                         next_vertex->cur_segments.erase(cs);
                                         Coordinate3D start_point = (*cs)->startPoint(), end_point = (*cs)->endPoint();
                                         
-                                        if(!this->tree2tree_maze_routing(&n, n.pins.at(tpn.first), n.pins.at(tpn.second), reroute_state)){
+                                        if(this->tree2tree_maze_routing(&n, n.pins.at(tpn.first), n.pins.at(tpn.second), reroute_state)){
                                             std::cout << "First reroute success\n";
                                         }
-                                        // TODO: pin2pin have error
-                                        // if(!this->pin2pin_maze_routing(&(this->layout->netlist.at(next_vertex->obstacle)), start_point, end_point, reroute_state)){
-                                        //     std::cout << "Second reroute success\n";
-                                        // }
+                                        if(this->pin2pin_maze_routing(&(this->layout->netlist.at(reroute_net_id)), start_point, end_point, reroute_state)){
+                                            std::cout << "Second reroute success\n";
+                                        }
                                         delete *s;
-                                        reroute_candidate = true;
+                                        find_reroute_candidate = true;
                                         break; // Exit the loop since we found the segment
                                     }
                                 }
-                                if(reroute_candidate) break;
+                                if(find_reroute_candidate) break;
                             }
-                            if(reroute_candidate) break;
+                            if(find_reroute_candidate) break;
                         }
                     }
-                    if(reroute_candidate) break;
+                    if(find_reroute_candidate) break;
                 }
             }
             
