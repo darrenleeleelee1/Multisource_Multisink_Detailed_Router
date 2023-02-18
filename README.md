@@ -1,6 +1,9 @@
 # Router
-## Build and Execute
+![workflow](https://github.com/darrenleeleelee1/Router/actions/workflows/result.yml/badge.svg)
+![workflow](https://github.com/darrenleeleelee1/Router/actions/workflows/verifier.yml/badge.svg)
+![workflow](https://github.com/darrenleeleelee1/Router/actions/workflows/memory_leak.yml/badge.svg)
 
+## Build and Execute
 * Build   : `make`
     * need `./obj` directory
 * Execute : `./router <testcase> <output>`
