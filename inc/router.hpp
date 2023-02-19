@@ -29,6 +29,6 @@ public:
     void twoPinNetDecomposition();
     bool outOfBound(Coordinate3D p);
     bool pin2pin_maze_routing(Net *net, Coordinate3D source_node, Coordinate3D sink_node, int &reroute_status);
-    bool tree2tree_maze_routing(Net *net, Coordinate3D source_node, Coordinate3D sink_node, int &reroute_status);
+    bool tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink, int &reroute_status);
 };
 
