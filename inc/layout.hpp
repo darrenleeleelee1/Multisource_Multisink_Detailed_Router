@@ -1,6 +1,9 @@
 #pragma once
 #include <vector>
 #include <set>
+#include <unordered_map>
+#include <unordered_set>
+
 class Coordinate3D{
 public:
 	int x, y, z;
@@ -16,6 +19,20 @@ public:
     	return this->x == other.x && this->y == other.y && this->z == other.z;
     }
 };
+inline void hash_combine(std::size_t& seed, const int& v) {
+	seed ^= std::hash<int>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+namespace std {
+    template<> struct hash<Coordinate3D> {
+        size_t operator()(const Coordinate3D& c) const {
+            size_t seed = 0;
+            hash_combine(seed, c.x);
+            hash_combine(seed, c.y);
+            hash_combine(seed, c.z);
+            return seed;
+        }
+    };
+}
 class Coordinate2D{
 public:
 	int x, y;
@@ -132,6 +149,85 @@ public:
 		}
 	}
 };
+class Subtree{
+public:
+    std::vector<Path*> paths; // stores the paths in each subtree
+	std::unordered_set<Coordinate3D> pinlist;
+	
+	Subtree() {}
+	Subtree(Coordinate3D pin) {
+		paths.resize(0);
+		this->pinlist.insert(pin);
+	}
+	std::string showPins(){
+		std::string tmp;
+		for(auto p : pinlist) tmp += p.toString() + ", ";
+		return tmp;
+	}
+};
+class Tree{
+public:
+	std::vector<int> parents; // stores the parent of each node in the subtree
+    std::vector<int> size; // stores the size of each subtree
+	std::vector<Subtree*> subtrees;
+	std::unordered_map<Coordinate3D, int> coordinate2index;
+	std::unordered_map<int, Coordinate3D> index2coordinate;
+	Tree() {}
+	Tree(std::vector<Coordinate3D> &pins) {
+		unsigned n = pins.size();
+		this->parents.resize(n, -1);
+        this->size.resize(n, 1);
+		subtrees.resize(n);
+		for (unsigned i = 0; i < n; i++){
+			subtrees.at(i) = (new Subtree(pins.at(i)));
+			this->coordinate2index[pins.at(i)] = i;
+			this->index2coordinate[i] = pins.at(i);
+		}
+	}
+	Subtree* at(int index){
+		return subtrees.at(find(index));
+	}
+	~Tree(){
+		for(unsigned i = 0; i < subtrees.size(); i++){
+			delete subtrees.at(i);
+		}
+	}
+	int find(int x) {
+		while (parents.at(x) >= 0) x = parents.at(x);
+		return x;
+	}
+	bool merge(int x, int y) {
+        int x_root = find(x);
+        int y_root = find(y);
+        if (x_root != y_root) {
+            if (size.at(x_root) < size.at(y_root)) {
+                std::swap(x_root, y_root);
+            }
+            parents.at(y_root) = x_root;
+            size.at(x_root) += size.at(y_root);
+            // merge paths
+            subtrees.at(x_root)->paths.insert(subtrees.at(x_root)->paths.end(), subtrees.at(y_root)->paths.begin(), subtrees.at(y_root)->paths.end());
+            subtrees.at(y_root)->paths.clear();
+			// merge pinlist
+			subtrees.at(x_root)->pinlist.insert(subtrees.at(y_root)->pinlist.begin(), subtrees.at(y_root)->pinlist.end());
+            subtrees.at(y_root)->pinlist.clear();
+            return true;
+        }
+        return false;
+    }
+	std::vector<Path*> getPath(){
+		std::unordered_set<int> roots;
+		std::vector<Path*> all_paths;
+		for(unsigned i = 0; i < coordinate2index.size(); i++){
+			int root = find(i);
+			if(!roots.count(root)){
+				roots.insert(root);
+				all_paths.insert(all_paths.end(), subtrees.at(root)->paths.begin(), subtrees.at(root)->paths.end());
+			}
+		}
+		return all_paths;
+	}
+};
 class Net{
 public:
 	// For Input
@@ -144,26 +240,25 @@ public:
 	std::vector<Segment_Draw> vertical_segments;
 	// For Router
 	std::vector<std::pair<int, int>> two_pins_net;
-	std::vector<Path*> paths;
+	Tree* tree;
 	Net(){
 		id = -1;
 		this->pins.resize(0);
 		this->vialist.clear();
 		this->horizontal_segments.resize(0);
 		this->vertical_segments.resize(0);
-		this->paths.resize(0);
 	}
 	Net(int _id) : id(_id){
 		this->pins.resize(0);
 		this->vialist.clear();
 		this->horizontal_segments.resize(0);
 		this->vertical_segments.resize(0);
-		this->paths.resize(0);
 	}
 	~Net(){
-		for (auto p : paths) {
-			delete p;
-		}
+		delete tree;
+	}
+	void initTrees(){
+		tree = new Tree(pins);
 	}
 	int getCost(){
 		// TODO: caculate
@@ -171,7 +266,7 @@ public:
 	}
 	int getWirelength(){
 		int sum = 0;
-		for(auto &p : this->paths){
+		for(auto &p : tree->getPath()){
 			for(auto &s : p->segments){
 				sum += s->getWirelength();
 			}
@@ -180,7 +275,7 @@ public:
 	}
 	// including adding via
 	void segmentRegularize(){
-		for(auto &p : this->paths){
+		for(auto &p : tree->getPath()){
 			if(p->segments.size() == 0){
 				if(p->start_pin == p->end_pin){
 					this->vialist.emplace(p->start_pin.x, p->start_pin.y);

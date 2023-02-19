@@ -71,6 +71,11 @@ public:
     void setDistanceZero(Coordinate3D coor){
         this->graph.at(coor.x).at(coor.y).at(coor.z)->distance = 0;
     }
+    void setDistanceZero(std::vector<Coordinate3D> coors){
+        for(auto c : coors){
+            setDistanceZero(c);
+        }
+    }
     void setDistanceZero(Segment seg){
         if(seg.z == 0){
             for(int i = std::min(seg.x, seg.neighbor); i <= std::max(seg.x, seg.neighbor); i++){
@@ -81,6 +86,11 @@ public:
             for(int i = std::min(seg.y, seg.neighbor); i <= std::max(seg.y, seg.neighbor); i++){
                 this->graph.at(seg.x).at(i).at(seg.z)->distance = 0;
             }
+        }
+    }
+    void setDistanceZero(std::vector<Segment> segs){
+        for(auto s : segs){
+            setDistanceZero(s);
         }
     }
     void setObstacles(int net_id, Coordinate3D start_point, Coordinate3D end_point){
@@ -137,12 +147,17 @@ public:
             }
         }
     }
+    void setSinks(std::vector<Segment> segs){
+        for(auto s : segs){
+            setSinks(s);
+        }
+    }
     void setSinks(Coordinate3D coor){
         this->graph.at(coor.x).at(coor.y).at(coor.z)->is_sink = true;
     }
     void setSinks(std::vector<Coordinate3D> pins){
         for(auto v : pins){
-            this->graph.at(v.x).at(v.y).at(v.z)->is_sink = true;
+            setSinks(v);
         }
     }
     void resetSinks(Segment seg){
@@ -157,12 +172,17 @@ public:
             }
         }
     }
+    void resetSinks(std::vector<Segment> segs){
+        for(auto s : segs){
+            resetSinks(s);
+        }
+    }
     void resetSinks(Coordinate3D coor){
         this->graph.at(coor.x).at(coor.y).at(coor.z)->is_sink = false;
     }
     void resetSinks(std::vector<Coordinate3D> pins){
         for(auto v : pins){
-            this->graph.at(v.x).at(v.y).at(v.z)->is_sink = false;
+            resetSinks(v);
         }
     }
 };

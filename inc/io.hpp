@@ -51,7 +51,7 @@ void readLayout(Layout *layout, char const *file_path){
             else if(tokens[0] == "Net_num"){
                 layout->netlist.resize(stoi(tokens[1]));
                 for(unsigned i = 0; i < layout->netlist.size(); i++){
-                    Net tmp_net;
+                    Net &tmp_net = layout->netlist.at(i);
                     while(getline(in_file, line)){
                         io::tokenLine(tokens, line);
                         if(tokens.size() == static_cast<unsigned int>(2) && tokens[0] == "Net_id") break;
@@ -66,7 +66,6 @@ void readLayout(Layout *layout, char const *file_path){
                         getline(in_file, line); io::tokenLine(tokens, line);
                         tmp_net.pins.at(j) = Coordinate3D{stoi(tokens[0]), stoi(tokens[1]), stoi(tokens[2])};
                     }
-                    layout->netlist.at(i) = tmp_net;
                 }
             }
             else if(tokens[0] == "Via_cost"){

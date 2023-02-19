@@ -24,6 +24,7 @@ void Router::twoPinNetDecomposition(){
             , this->layout->horizontal_segment_cost, this->layout->vertical_segment_cost);
     }
 }
+/*
 bool Router::pin2pin_maze_routing(Net *net, Coordinate3D source_node, Coordinate3D sink_node, int &reroute_status){
     bool success = true;
     Vertex *current;
@@ -31,11 +32,15 @@ bool Router::pin2pin_maze_routing(Net *net, Coordinate3D source_node, Coordinate
     std::priority_queue<Vertex*, std::vector<Vertex*>, decltype(comp)> pq(comp);
     // ::: Initilize :::
     // Let the second point be the sink
-    this->grid->setSinks(sink_node);
+    for(auto &p : net->subtrees.pinlist.at(net->subtree.find(net->coordinate2index.at(sink_node)))){
+        this->grid->setSinks(p);
+    }
     // Set all vertex's distance to infinity
     this->grid->setDistanceInfinity();
     // Set the source's distance to zero
-    this->grid->setDistanceZero(source_node);
+    for(auto &p : net->subtrees.pinlist.at(net->subtree.find(net->coordinate2index.at(source_node)))){
+        this->grid->setDistanceZero(source_node);
+    }
     pq.push(this->grid->graph.at(source_node.x)
         .at(source_node.y).at(source_node.z));
     // Set all vertex's prevertex to nullptr
@@ -163,46 +168,45 @@ bool Router::pin2pin_maze_routing(Net *net, Coordinate3D source_node, Coordinate
     this->grid->resetSinks(sink_node);
     return success; // source_node to sink_node have paths
 }
-bool Router::tree2tree_maze_routing(Net *net, Coordinate3D source_node, Coordinate3D sink_node, int &reroute_status){
+*/
+bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink, int &reroute_status){
     bool success = true;
     Vertex *current;
     auto comp = [](const Vertex *lhs, const Vertex *rhs) {return lhs->distance > rhs->distance;};
     std::priority_queue<Vertex*, std::vector<Vertex*>, decltype(comp)> pq(comp);
     // ::: Initilize :::
     // Let the second point be the sink
-    this->grid->setSinks(sink_node);
-    for(auto &p : net->paths){
-        if(p->start_pin == sink_node || p->end_pin == sink_node){
-            for(auto &s : p->segments){
-                this->grid->setSinks(*s);
-            }
+    this->grid->setSinks(std::vector<Coordinate3D>(sink->pinlist.begin(), sink->pinlist.end()));
+    for(auto &p : sink->paths){
+        for(auto &s : p->segments){
+            this->grid->setSinks(*s);
         }
     }
     // Set all vertex's distance to infinity
     this->grid->setDistanceInfinity();
     // Set the source's distance to zero
-    this->grid->setDistanceZero(source_node);
-    pq.push(this->grid->graph.at(source_node.x)
-        .at(source_node.y).at(source_node.z));
-    for(auto &p : net->paths){
-        if(p->start_pin == source_node || p->end_pin == source_node){
-            for(auto &s : p->segments){
-                if(s->z == 0){
-                    for(int i = std::min(s->x, s->neighbor); i <= std::max(s->x, s->neighbor); i++){
-                        if(this->grid->graph.at(i).at(s->y).at(s->z)->distance != 0){
-                            pq.push(this->grid->graph.at(i).at(s->y).at(s->z));
-                        }
+    this->grid->setDistanceZero(std::vector<Coordinate3D>(source->pinlist.begin(), source->pinlist.end()));
+    for(auto p : source->pinlist){
+        pq.push(this->grid->graph.at(p.x)
+            .at(p.y).at(p.z));
+    }
+    for(auto &p : source->paths){
+        for(auto &s : p->segments){
+            if(s->z == 0){
+                for(int i = std::min(s->x, s->neighbor); i <= std::max(s->x, s->neighbor); i++){
+                    if(this->grid->graph.at(i).at(s->y).at(s->z)->distance != 0){
+                        pq.push(this->grid->graph.at(i).at(s->y).at(s->z));
                     }
                 }
-                else{
-                    for(int i = std::min(s->y, s->neighbor); i <= std::max(s->y, s->neighbor); i++){
-                        if(this->grid->graph.at(s->x).at(i).at(s->z)->distance != 0){
-                            pq.push(this->grid->graph.at(s->x).at(i).at(s->z));
-                        }
-                    }
-                }
-                this->grid->setDistanceZero(*s);
             }
+            else{
+                for(int i = std::min(s->y, s->neighbor); i <= std::max(s->y, s->neighbor); i++){
+                    if(this->grid->graph.at(s->x).at(i).at(s->z)->distance != 0){
+                        pq.push(this->grid->graph.at(s->x).at(i).at(s->z));
+                    }
+                }
+            }
+            this->grid->setDistanceZero(*s);
         }
     }
     // Set all vertex's prevertex to nullptr
@@ -236,33 +240,18 @@ bool Router::tree2tree_maze_routing(Net *net, Coordinate3D source_node, Coordina
     // ::: Dijkstra :::
     // ::: Backtracking :::
     Path *tmp_path = new Path();
-    net->paths.push_back(tmp_path);
+    source->paths.push_back(tmp_path);
 
     if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->is_sink){
-        if(current->coordinate == sink_node){
-            // Pin location
-            tmp_path->start_pin = current->coordinate;
-        }
-        else{
-            // Via location, set z to negative
-            tmp_path->start_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, -1);
-        }
+        tmp_path->start_pin = current->coordinate;
     }
     else{
-        if(current->coordinate.x == sink_node.x && current->coordinate.y == sink_node.y
-                && (current->coordinate.z + 1) % 2 == sink_node.z){
-            // Pin location
-            tmp_path->start_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, (current->coordinate.z + 1) % 2);
-        }
-        else{
-            // Via location, set z to negative
-            tmp_path->start_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, -1);
-        }
+        tmp_path->start_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, (current->coordinate.z + 1) % 2);
     }
 
     if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->distance == 0){
         if(!this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_sink){
-            std::cout << "Failed: Net#" << net->id << " " << source_node.toString() << "-" << sink_node.toString() << " routing failed.\n";
+            std::cout << "Failed: Net#" << net->id << " " << source->showPins() << "-" << sink->showPins() << " routing failed.\n";
             success = false;
             reroute_status = 1;
 
@@ -270,7 +259,7 @@ bool Router::tree2tree_maze_routing(Net *net, Coordinate3D source_node, Coordina
     }
     else if(!this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->is_sink
             && !this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_sink){
-        std::cout << "Failed: Net#" << net->id << " " << source_node.toString() << "-" << sink_node.toString() << " routing failed.\n";
+        std::cout << "Failed: Net#" << net->id << " " << source->showPins() << "-" << sink->showPins() << " routing failed.\n";
         success = false;
         reroute_status = 2;
     }
@@ -318,34 +307,17 @@ bool Router::tree2tree_maze_routing(Net *net, Coordinate3D source_node, Coordina
     }
     
     if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->distance == 0){
-        if(current->coordinate == source_node){
-            // Pin location
-            tmp_path->end_pin = current->coordinate;
-        }
-        else{
-            // Via location, set z to negative
-            tmp_path->end_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, -1);
-        }
+        tmp_path->end_pin = current->coordinate;
     }
     else{
-        if(current->coordinate.x == source_node.x && current->coordinate.y == source_node.y
-                && (current->coordinate.z + 1) % 2 == source_node.z){
-            // Pin location
-            tmp_path->end_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, (current->coordinate.z + 1) % 2);
-        }
-        else{
-            // Via location, set z to negative
-            tmp_path->end_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, -1);
-        }
+        tmp_path->end_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, (current->coordinate.z + 1) % 2);
     }
     // ::: Backtracking :::
     // Let the second point reset to not the sink
-    this->grid->resetSinks(sink_node);
-    for(auto &p : net->paths){
-        if(p->start_pin == sink_node || p->end_pin == sink_node){
-            for(auto &s : p->segments){
-                this->grid->resetSinks(*s);
-            }
+    this->grid->resetSinks(std::vector<Coordinate3D>(sink->pinlist.begin(), sink->pinlist.end()));
+    for(auto &p : sink->paths){
+        for(auto &s : p->segments){
+            this->grid->resetSinks(*s);
         }
     }
     return success;

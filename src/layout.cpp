@@ -76,3 +76,4 @@ void Net::rmst_kruskal(int via_cost, int horizontal_segments_cost, int vertical_
     int cost_rmst = kruskal.cost_rmst();
     if(cost_rmst == -1) std::cout << "Error, net#" << this->id << " RMST build failed.\n";
 }
+
