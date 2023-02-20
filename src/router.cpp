@@ -289,11 +289,11 @@ bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink, in
                 tmp_seg->y = current->coordinate.y;
             }
             current->obstacle = net->id;
-            if(tmp_seg != nullptr) current->cur_segments.push_back(tmp_seg);
+            if(tmp_path != nullptr) current->cur_paths.push_back(tmp_path);
             current = current->prevertex;
         }
         current->obstacle = net->id;
-        if(tmp_seg != nullptr) current->cur_segments.push_back(tmp_seg);
+        if(tmp_path != nullptr) current->cur_paths.push_back(tmp_path);
 
         if(tmp_seg->x != current->coordinate.x || tmp_seg->y != current->coordinate.y){
             if(tmp_seg->z == 0){
