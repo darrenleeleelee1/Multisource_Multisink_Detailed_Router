@@ -1,7 +1,7 @@
 # Router
-![workflow](https://github.com/darrenleeleelee1/Router/actions/workflows/result.yml/badge.svg)
-![workflow](https://github.com/darrenleeleelee1/Router/actions/workflows/verifier.yml/badge.svg)
-![workflow](https://github.com/darrenleeleelee1/Router/actions/workflows/memory_leak.yml/badge.svg)
+![workflow](https://github.com/darrenleeleelee1/Router/actions/workflows/result.yml/badge.svg?event=push)
+![workflow](https://github.com/darrenleeleelee1/Router/actions/workflows/verifier.yml/badge.svg?event=push)
+![workflow](https://github.com/darrenleeleelee1/Router/actions/workflows/memory_leak.yml/badge.svg?event=push)
 
 ## Build and Execute
 * Build   : `make`
