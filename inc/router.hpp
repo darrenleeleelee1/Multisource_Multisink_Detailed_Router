@@ -17,8 +17,6 @@ public:
         for(auto o : l->obstacles) this->grid->setObstacles(l->netlist.size() + 1, o.start_point, o.end_point);
         for(auto n : l->netlist){
             for(auto p : n.pins) this->grid->setObstacles(n.id, p, p);
-            // for(auto hs : n.horizontal_segments) this->grid->setObstacles(hs.start_point, hs.end_point);
-            // for(auto vs : n.vertical_segments) this->grid->setObstacles(vs.start_point, vs.end_point);
         }
     }
     ~Router() {

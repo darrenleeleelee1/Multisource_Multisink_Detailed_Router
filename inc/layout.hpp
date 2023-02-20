@@ -159,6 +159,11 @@ public:
 		paths.resize(0);
 		this->pinlist.insert(pin);
 	}
+	~Subtree(){
+		for(auto p : paths){
+			delete p;
+		}
+	}
 	std::string showPins(){
 		std::string tmp;
 		for(auto p : pinlist) tmp += p.toString() + ", ";
@@ -240,7 +245,7 @@ public:
 	std::vector<Segment_Draw> vertical_segments;
 	// For Router
 	std::vector<std::pair<int, int>> two_pins_net;
-	Tree* tree;
+	Tree* tree = nullptr;
 	Net(){
 		id = -1;
 		this->pins.resize(0);
