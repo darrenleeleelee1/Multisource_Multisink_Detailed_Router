@@ -7,8 +7,7 @@ class Router
 public:
     Layout *layout;
     Grid *grid;
-    static const std::vector<int> x_orientation;
-    static const std::vector<int> y_orientation;
+    static const std::vector<std::vector<Coordinate3D>> move_orientation;
     Router() {}
     Router(Layout *l) {
         this->layout = l;

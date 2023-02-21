@@ -324,7 +324,7 @@ public:
 	// For Input
 	int width, height;
 	int num_of_layers = 2;
-	int via_cost = 10;
+	int via_cost = 1;
 	int horizontal_segment_cost = 1, vertical_segment_cost = 1;
 	std::vector<Obstacle> obstacles;
 	std::vector<Net> netlist;

@@ -35,7 +35,6 @@ void Router::main(){
     //     }
     //     else return a.pins.size() > b.pins.size();
     // });
-
     for(auto &n : this->layout->netlist){
         n.initTrees();
         for(auto &tpn : n.two_pins_net){
