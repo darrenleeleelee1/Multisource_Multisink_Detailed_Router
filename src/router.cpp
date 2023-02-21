@@ -5,7 +5,7 @@
 
 const std::vector<std::vector<Coordinate3D>> Router::move_orientation = {{Coordinate3D(1,0,0), Coordinate3D(-1,0,0), Coordinate3D(0,0,1)},
                             {Coordinate3D(0,1,0), Coordinate3D(0,-1,0), Coordinate3D(0,0,-1)}};
-int maze_route_cost(Router *R, Coordinate3D sp, Coordinate3D ep){
+int mazeRouteCost(Router *R, Coordinate3D sp, Coordinate3D ep){
     int cost = 0;
     if(sp.z != ep.z){
         cost += R->layout->via_cost;
@@ -13,7 +13,34 @@ int maze_route_cost(Router *R, Coordinate3D sp, Coordinate3D ep){
     cost += std::abs(sp.x - ep.x) * R->layout->horizontal_segment_cost + std::abs(sp.y - ep.y) * R->layout->vertical_segment_cost;
     return cost;
 }
+void splitPaths(Coordinate3D point, Path* split_candidate, std::vector<Path*> &updated_paths){
+    for(unsigned i = 0; i < updated_paths.size(); i++){
+        auto &p = updated_paths.at(i);
+        if(p == split_candidate){
+            Coordinate3D start_point = p->start_pin;
+            Path *new_path;
+            new_path->start_pin = p->start_pin;
+            for(unsigned j = 0; j < updated_paths.size(); j++){
+                auto &s = p->segments.at(j);
+                if(s->colinear(point)) {
+                    // Split segment
+                    if(!(point == s->startPoint() || point == s->endPoint())){
 
+                    }
+                    // Assign to old one
+                    else if(point == start_point){
+                        
+                    }
+                    // Assign to new one
+                    else{
+
+                    }
+                }
+                start_point = (s->startPoint() == start_point ? s->endPoint() : s->startPoint()); 
+            }
+        }
+    }
+}
 bool Router::outOfBound(Coordinate3D p){
     if(p.x < 0 || p.x > this->layout->width) return true;
     else if(p.y < 0 || p.y > this->layout->height) return true;
@@ -63,11 +90,11 @@ bool Router::pin2pin_maze_routing(Net *net, Coordinate3D source_node, Coordinate
                 if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->isObstacle()
                     && !(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_sink)) continue;
             }
-            if(current->distance + maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x + this->x_orientation.at(i), current->coordinate.y + this->y_orientation.at(i), i % 2})
+            if(current->distance + mazeRouteCost(this, current->coordinate, Coordinate3D{current->coordinate.x + this->x_orientation.at(i), current->coordinate.y + this->y_orientation.at(i), i % 2})
                     < this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2)->distance){
                 this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2)->prevertex = current;
                 this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2)->distance 
-                    = current->distance + maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x + this->x_orientation.at(i), current->coordinate.y + this->y_orientation.at(i), i % 2}); 
+                    = current->distance + mazeRouteCost(this, current->coordinate, Coordinate3D{current->coordinate.x + this->x_orientation.at(i), current->coordinate.y + this->y_orientation.at(i), i % 2}); 
                 pq.push(this->grid->graph.at(current->coordinate.x + this->x_orientation.at(i)).at(current->coordinate.y + this->y_orientation.at(i)).at(i % 2));
             }
                 
@@ -171,11 +198,12 @@ bool Router::pin2pin_maze_routing(Net *net, Coordinate3D source_node, Coordinate
 }
 */
 bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink, int &reroute_status){
+    /* Declaring */
     bool success = true;
     Vertex *current;
     auto comp = [](const Vertex *lhs, const Vertex *rhs) {return lhs->distance > rhs->distance;};
     std::priority_queue<Vertex*, std::vector<Vertex*>, decltype(comp)> pq(comp);
-    // ::: Initilize :::
+    /* Initialize the soruce and sink verteices */
     // Let the second point be the sink
     this->grid->setSinks(std::vector<Coordinate3D>(sink->pinlist.begin(), sink->pinlist.end()));
     for(auto &p : sink->paths){
@@ -212,8 +240,11 @@ bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink, in
     }
     // Set all vertex's prevertex to nullptr
     this->grid->setPrevertexNull();
-    // ::: Initilize :::
-    // ::: Dijkstra :::
+    /* 
+     * Dijkstra's algorithm for finding the shortest path in tree to tree.
+     * The algorithm starts from the source tree and explores all reachable vertices,
+     * until it reaches the sink or there are no more vertices left to explore.
+     */
     while(!pq.empty()){
         current = pq.top(); pq.pop();
         if(current->is_sink){
@@ -225,17 +256,16 @@ bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink, in
             if(outOfBound(Coordinate3D{current->coordinate.x + move_orientation.at(cur_z).at(i).x, current->coordinate.y + move_orientation.at(cur_z).at(i).y, cur_z + move_orientation.at(cur_z).at(i).z})) continue;
             if(this->grid->graph.at(current->coordinate.x + move_orientation.at(cur_z).at(i).x).at(current->coordinate.y + move_orientation.at(cur_z).at(i).y).at(cur_z + move_orientation.at(cur_z).at(i).z)->isObstacle()
             && !this->grid->graph.at(current->coordinate.x + move_orientation.at(cur_z).at(i).x).at(current->coordinate.y + move_orientation.at(cur_z).at(i).y).at(cur_z + move_orientation.at(cur_z).at(i).z)->is_sink) continue;
-            if(current->distance + maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x + move_orientation.at(cur_z).at(i).x, current->coordinate.y + move_orientation.at(cur_z).at(i).y, cur_z + move_orientation.at(cur_z).at(i).z})
+            if(current->distance + mazeRouteCost(this, current->coordinate, Coordinate3D{current->coordinate.x + move_orientation.at(cur_z).at(i).x, current->coordinate.y + move_orientation.at(cur_z).at(i).y, cur_z + move_orientation.at(cur_z).at(i).z})
                     < this->grid->graph.at(current->coordinate.x + move_orientation.at(cur_z).at(i).x).at(current->coordinate.y + move_orientation.at(cur_z).at(i).y).at(cur_z + move_orientation.at(cur_z).at(i).z)->distance){
                 this->grid->graph.at(current->coordinate.x + move_orientation.at(cur_z).at(i).x).at(current->coordinate.y + move_orientation.at(cur_z).at(i).y).at(cur_z + move_orientation.at(cur_z).at(i).z)->prevertex = current;
                 this->grid->graph.at(current->coordinate.x + move_orientation.at(cur_z).at(i).x).at(current->coordinate.y + move_orientation.at(cur_z).at(i).y).at(cur_z + move_orientation.at(cur_z).at(i).z)->distance 
-                    = current->distance + maze_route_cost(this, current->coordinate, Coordinate3D{current->coordinate.x + move_orientation.at(cur_z).at(i).x, current->coordinate.y + move_orientation.at(cur_z).at(i).y, cur_z + move_orientation.at(cur_z).at(i).z}); 
+                    = current->distance + mazeRouteCost(this, current->coordinate, Coordinate3D{current->coordinate.x + move_orientation.at(cur_z).at(i).x, current->coordinate.y + move_orientation.at(cur_z).at(i).y, cur_z + move_orientation.at(cur_z).at(i).z}); 
                 pq.push(this->grid->graph.at(current->coordinate.x + move_orientation.at(cur_z).at(i).x).at(current->coordinate.y + move_orientation.at(cur_z).at(i).y).at(cur_z + move_orientation.at(cur_z).at(i).z));
             }
         }
     }
-    // ::: Dijkstra :::
-    // ::: Backtracking :::
+   /* Backtracking */
     Path *tmp_path = new Path();
     source->paths.push_back(tmp_path);
 
@@ -309,7 +339,22 @@ bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink, in
     else{
         tmp_path->end_pin = Coordinate3D(current->coordinate.x, current->coordinate.y, (current->coordinate.z + 1) % 2);
     }
-    // ::: Backtracking :::
+    /* Split Path */
+    // Check source->paths contain the tmp_path->start_pin
+    if(this->grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths.size() == 2){
+        if(!source->pinlist.count(tmp_path->start_pin)){
+            auto &split_candidate_path = this->grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths.at(0);
+            splitPaths(tmp_path->start_pin, split_candidate_path, source->paths);
+        }
+    }
+    // Then check source->paths contain the tmp_path->end_pin
+    else if(this->grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths.size() == 2){
+        if(!source->pinlist.count(tmp_path->end_pin)){
+            auto &split_candidate_path = this->grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths.at(0);
+            splitPaths(tmp_path->end_pin, split_candidate_path, source->paths);
+        }
+    }
+    /* Post job cleanup */
     // Let the second point reset to not the sink
     this->grid->resetSinks(std::vector<Coordinate3D>(sink->pinlist.begin(), sink->pinlist.end()));
     for(auto &p : sink->paths){

@@ -37,12 +37,22 @@ void Router::main(){
     // });
     for(auto &n : this->layout->netlist){
         n.initTrees();
+        if(n.id != 7) continue;
         for(auto &tpn : n.two_pins_net){
             int reroute_state = 0; // 1 means source stuck, 2 means sink stuck
             if(!this->tree2tree_maze_routing(&n, n.tree->at(tpn.first), n.tree->at(tpn.second), reroute_state)){
                 // TODO reroute
             }
-            else n.tree->merge(tpn.first, tpn.second);
+            else {
+                try {
+                    if (!n.tree->mergeTree(tpn.first, tpn.second)) {
+                        throw std::runtime_error("Error: merge tree failed");
+                    }
+                }
+                catch (const std::exception& ex) {
+                    std::cout << ex.what() << std::endl;
+                }
+            }
         }
     }
 

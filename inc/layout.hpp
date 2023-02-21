@@ -126,6 +126,16 @@ public:
 					+ "-(" + std::to_string(this->getX()) + "," + std::to_string(this->getNeighbor()) + "," + std::to_string(this->z) + ")";
 		}
 	}
+	bool colinear(Coordinate3D point){
+		if(point.z != this->z) return false;
+		if(this->z == 0){
+			if(this->getX() <= point.x && this->getNeighbor() <= point.x) return true;
+		}
+		else if(this->z == 1){
+			if(this->getY() <= point.y && this->getNeighbor() <= point.y) return true;
+		}
+		return false;
+	}
 	int getWirelength(){
 		if(z == 0){
 			return std::max(this->x, this->neighbor) - std::min(this->x, this->neighbor);
@@ -201,7 +211,7 @@ public:
 		while (parents.at(x) >= 0) x = parents.at(x);
 		return x;
 	}
-	bool merge(int x, int y) {
+	bool mergeTree(int x, int y) {
         int x_root = find(x);
         int y_root = find(y);
         if (x_root != y_root) {
