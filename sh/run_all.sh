@@ -8,8 +8,24 @@ for i in {0..9}; do
     ./router ./case/test$i.txt ./out/test$i.txt
 done
 
+# parse aruguments
+while getopts ":dv" opt; do
+  case $opt in
+    d)
+      draw=true
+      ;;
+    v)
+      verify=true
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
 # verify
-if [ "$1" == "--verify" ]; then
+if [ "$verify" = true ]; then
     not_pass_files=""
     for i in {0..9}; do
         echo "Running case test$i.txt."
@@ -29,6 +45,6 @@ fi
 
 
 # draw
-if [ "$2" == "--draw" ]; then
+if [ "$draw" = true ]; then
     python3 visual.py --dir ./out
 fi

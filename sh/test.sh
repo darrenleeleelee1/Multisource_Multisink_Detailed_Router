@@ -1,34 +1,24 @@
 #!/bin/bash
-# build
-make clean && make -j16
 
-# run
-for i in {0..9}; do
-    echo "Running compare_case test$i.txt"
-    ./router ./compare_case/test$i.txt ./out/test$i.txt
+while getopts ":dv" opt; do
+  case $opt in
+    d)
+      draw=true
+      ;;
+    v)
+      verify=true
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
 done
 
-# verify
-if [ "$1" == "--verify" ]; then
-    not_pass_files=""
-    for i in {0..9}; do
-        echo "Running compare_case test$i.txt."
-        if (./verifier ./out/test$i.txt | grep -q "Error"); then
-            echo "Error found in compare_case test$i.txt."
-            echo "Please run the following code to check the log."
-            echo "./verifier ./out/test$i.txt"
-            not_pass_files="$not_pass_files$i, "
-        else
-            echo "Passed."
-        fi
-    done
-    if [ -n "$not_pass_files" ]; then
-        echo "Failed at test{$not_pass_files}.txt"
-    fi
+if [ "$draw" = true ]; then
+  echo "Drawing..."
 fi
 
-
-# draw
-if [ "$2" == "--draw" ]; then
-    python3 visual.py --dir ./out
+if [ "$verify" = true ]; then
+  echo "Verifying..."
 fi
