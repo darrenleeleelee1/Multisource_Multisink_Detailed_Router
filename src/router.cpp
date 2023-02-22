@@ -14,14 +14,44 @@ int mazeRouteCost(Router *R, Coordinate3D sp, Coordinate3D ep){
     cost += std::abs(sp.x - ep.x) * R->layout->horizontal_segment_cost + std::abs(sp.y - ep.y) * R->layout->vertical_segment_cost;
     return cost;
 }
-void splitPaths(Grid* grid, Coordinate3D point, Path* split_candidate, std::vector<Path*> &updated_paths){
+void updateGridCurPath(Grid *grid, Path *split_candidate, Path *new_path, Segment *s){
+    if(s->z == 0){
+        for(int k = s->getX(); k <= s->getNeighbor(); k++){
+            // Find the iterator for the element to remove
+            auto &cur_path = grid->graph.at(k).at(s->getY()).at(s->z)->cur_paths;
+            auto it = std::find(cur_path.begin(), cur_path.end(), split_candidate);
+            // If the element was found, remove it from the vector
+            if (it != cur_path.end()) {
+                cur_path.erase(it);
+            }
+            cur_path.push_back(new_path);
+        }
+    }
+    else if(s->z == 1){
+        for(int k = s->getY(); k <= s->getNeighbor(); k++){
+            // Find the iterator for the element to remove
+            auto &cur_path = grid->graph.at(s->getX()).at(k).at(s->z)->cur_paths;
+            auto it = std::find(cur_path.begin(), cur_path.end(), split_candidate);
+            // If the element was found, remove it from the vector
+            if (it != cur_path.end()) {
+                cur_path.erase(it);
+            }
+            cur_path.push_back(new_path);
+        }
+    }
+}
+void splitPaths(Grid *grid, Coordinate3D point, Path *split_candidate, std::vector<Path*> &updated_paths){
     for(unsigned i = 0; i < updated_paths.size(); i++){
         auto &p = updated_paths.at(i);
         if(p == split_candidate){
             Coordinate3D start_point = p->start_pin;
             Path *new_path = new Path();
+            bool complete_path = false;;
             new_path->start_pin = p->start_pin;
             std::vector<Segment*> remove_list;
+            if(point == Coordinate3D(38, 27, 1)){
+                int debug = 10;
+            }
             for(unsigned j = 0; j < p->segments.size(); j++){
                 auto &s = p->segments.at(j);
                 if(s->colinear(point)){
@@ -39,53 +69,39 @@ void splitPaths(Grid* grid, Coordinate3D point, Path* split_candidate, std::vect
                             else s->y = point.y;
                         }
                         new_path->end_pin = point;
-                        p->end_pin = point;
+                        p->start_pin = point;
+                        complete_path = true;
+
+                        updateGridCurPath(grid, split_candidate, new_path, new_segment);
                         if(new_segment != nullptr) new_path->segments.push_back(new_segment);
+                        
                     }
                     // Assign to old one
                     else if(point == start_point){
                         new_path->end_pin = start_point;
-                        p->end_pin = new_path->end_pin;
+                        p->start_pin = new_path->end_pin;
+                        complete_path = true;
                     }
                     // Assign to new one
                     else{
+                        updateGridCurPath(grid, split_candidate, new_path, s);
                         remove_list.push_back(s);
                         new_path->segments.push_back(s);
-                        start_point = (s->startPoint() == start_point ? s->endPoint() : s->startPoint());
+                        start_point = (s->startPoint() == start_point ? Coordinate3D(s->endPoint().x, s->endPoint().y, (s->endPoint().z + 1) % 2) 
+                                    : Coordinate3D(s->startPoint().x, s->startPoint().y, (s->startPoint().z + 1) % 2));
+                        
                         new_path->end_pin = start_point;
-                        p->end_pin = new_path->end_pin;
+                        p->start_pin = new_path->end_pin;
+                        complete_path = true;
                     }
-                    if(new_path)
                     break;
                 }
                 else{
-                    if(s->z == 0){
-                        for(int k = s->getX(); k <= s->getNeighbor(); k++){
-                            // Find the iterator for the element to remove
-                            auto &cur_path = grid->graph.at(k).at(s->getY()).at(s->z)->cur_paths;
-                            auto it = std::find(cur_path.begin(), cur_path.end(), split_candidate);
-                            // If the element was found, remove it from the vector
-                            if (it != cur_path.end()) {
-                                cur_path.erase(it);
-                            }
-                            cur_path.push_back(new_path);
-                        }
-                    }
-                    else if(s->z == 1){
-                        for(int k = s->getY(); k <= s->getNeighbor(); k++){
-                            // Find the iterator for the element to remove
-                            auto &cur_path = grid->graph.at(k).at(s->getY()).at(s->z)->cur_paths;
-                            auto it = std::find(cur_path.begin(), cur_path.end(), split_candidate);
-                            // If the element was found, remove it from the vector
-                            if (it != cur_path.end()) {
-                                cur_path.erase(it);
-                            }
-                            cur_path.push_back(new_path);
-                        }
-                    }
+                    updateGridCurPath(grid, split_candidate, new_path, s);
                     remove_list.push_back(s);
                     new_path->segments.push_back(s);
-                    start_point = (s->startPoint() == start_point ? s->endPoint() : s->startPoint()); 
+                    start_point = (s->startPoint() == start_point ? Coordinate3D(s->endPoint().x, s->endPoint().y, (s->endPoint().z + 1) % 2) 
+                                : Coordinate3D(s->startPoint().x, s->startPoint().y, (s->startPoint().z + 1) % 2));
                 }
             }
             for (auto it = p->segments.begin(); it != p->segments.end(); ) {
@@ -97,7 +113,10 @@ void splitPaths(Grid* grid, Coordinate3D point, Path* split_candidate, std::vect
                     ++it;
                 }
             }
-            if(new_path != nullptr) updated_paths.push_back(new_path);
+            if(complete_path) updated_paths.push_back(new_path);
+            else{
+                int debug = 10;
+            }
             break;
         }
     }
