@@ -9,7 +9,7 @@
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/router",
-        "args": ["./case/test8.txt", "./out/test8.txt"],
+        "args": ["./case/test17.txt", "./out/test17.txt"],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}/",
         "environment": [],

@@ -98,6 +98,9 @@ void writeLayout(Layout *layout, char const *file_path){
     }
     out_file << "Net_num " << layout->netlist.size() << "\n";
     for(unsigned i = 0; i < layout->netlist.size(); i++){
+        if(i == 38){
+            int debug = 10;
+        }
         layout->netlist.at(i).segmentRegularize();
         out_file << "Net_id " << layout->netlist.at(i).id << "\n";
         out_file << "pin_num " << layout->netlist.at(i).pins.size() << "\n";

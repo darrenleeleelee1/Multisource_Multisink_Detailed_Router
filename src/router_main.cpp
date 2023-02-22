@@ -37,7 +37,7 @@ void Router::main(){
     // });
     for(auto &n : this->layout->netlist){
         n.initTrees();
-        if(n.id == 4){
+        if(n.id == 38){
             int debug = 10;
         }
         for(auto &tpn : n.two_pins_net){
