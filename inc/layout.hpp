@@ -130,11 +130,11 @@ public:
 		if(point.z != this->z) return false;
 		if(this->z == 0){
 			if(this->getY() != point.y) return false;
-			if(this->getX() <= point.x && this->getNeighbor() <= point.x) return true;
+			if(this->getX() <= point.x && point.x <= this->getNeighbor()) return true;
 		}
 		else if(this->z == 1){
-			if(this->getX() != point.y) return false;
-			if(this->getY() <= point.y && this->getNeighbor() <= point.y) return true;
+			if(this->getX() != point.x) return false;
+			if(this->getY() <= point.y && point.y <= this->getNeighbor()) return true;
 		}
 		return false;
 	}

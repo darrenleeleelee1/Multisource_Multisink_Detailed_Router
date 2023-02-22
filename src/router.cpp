@@ -2,6 +2,7 @@
 #include <cmath>
 #include <iostream>
 #include <algorithm>
+#include <type_traits>
 #include "router.hpp"
 const std::vector<std::vector<Coordinate3D>> Router::move_orientation = {{Coordinate3D(1,0,0), Coordinate3D(-1,0,0), Coordinate3D(0,0,1)},
                             {Coordinate3D(0,1,0), Coordinate3D(0,-1,0), Coordinate3D(0,0,-1)}};
@@ -14,12 +15,11 @@ int mazeRouteCost(Router *R, Coordinate3D sp, Coordinate3D ep){
     return cost;
 }
 void splitPaths(Grid* grid, Coordinate3D point, Path* split_candidate, std::vector<Path*> &updated_paths){
-    Path *new_path = nullptr;
     for(unsigned i = 0; i < updated_paths.size(); i++){
         auto &p = updated_paths.at(i);
         if(p == split_candidate){
             Coordinate3D start_point = p->start_pin;
-            new_path = new Path();
+            Path *new_path = new Path();
             new_path->start_pin = p->start_pin;
             std::vector<Segment*> remove_list;
             for(unsigned j = 0; j < p->segments.size(); j++){
@@ -33,12 +33,14 @@ void splitPaths(Grid* grid, Coordinate3D point, Path* split_candidate, std::vect
                             if(s->neighbor == start_point.x) s->neighbor = point.x;
                             else s->x = point.x;
                         }
-                        else if(s->z == 1){
+                        else{
                             new_segment = new Segment(s->z, s->x, start_point.y, point.y);
                             if(s->neighbor == start_point.y) s->neighbor = point.y;
                             else s->y = point.y;
                         }
-                        new_path->segments.push_back(new_segment);
+                        new_path->end_pin = point;
+                        p->end_pin = point;
+                        if(new_segment != nullptr) new_path->segments.push_back(new_segment);
                     }
                     // Assign to old one
                     else if(point == start_point){
@@ -53,6 +55,7 @@ void splitPaths(Grid* grid, Coordinate3D point, Path* split_candidate, std::vect
                         new_path->end_pin = start_point;
                         p->end_pin = new_path->end_pin;
                     }
+                    if(new_path)
                     break;
                 }
                 else{
@@ -94,11 +97,10 @@ void splitPaths(Grid* grid, Coordinate3D point, Path* split_candidate, std::vect
                     ++it;
                 }
             }
+            if(new_path != nullptr) updated_paths.push_back(new_path);
             break;
         }
     }
-    if(new_path != nullptr)updated_paths.push_back(new_path);
-
 }
 bool Router::outOfBound(Coordinate3D p){
     if(p.x < 0 || p.x > this->layout->width) return true;
