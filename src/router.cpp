@@ -1,8 +1,8 @@
 #include <queue>
 #include <cmath>
 #include <iostream>
+#include <algorithm>
 #include "router.hpp"
-
 const std::vector<std::vector<Coordinate3D>> Router::move_orientation = {{Coordinate3D(1,0,0), Coordinate3D(-1,0,0), Coordinate3D(0,0,1)},
                             {Coordinate3D(0,1,0), Coordinate3D(0,-1,0), Coordinate3D(0,0,-1)}};
 int mazeRouteCost(Router *R, Coordinate3D sp, Coordinate3D ep){
@@ -13,33 +13,92 @@ int mazeRouteCost(Router *R, Coordinate3D sp, Coordinate3D ep){
     cost += std::abs(sp.x - ep.x) * R->layout->horizontal_segment_cost + std::abs(sp.y - ep.y) * R->layout->vertical_segment_cost;
     return cost;
 }
-void splitPaths(Coordinate3D point, Path* split_candidate, std::vector<Path*> &updated_paths){
+void splitPaths(Grid* grid, Coordinate3D point, Path* split_candidate, std::vector<Path*> &updated_paths){
+    Path *new_path = nullptr;
     for(unsigned i = 0; i < updated_paths.size(); i++){
         auto &p = updated_paths.at(i);
         if(p == split_candidate){
             Coordinate3D start_point = p->start_pin;
-            Path *new_path;
+            new_path = new Path();
             new_path->start_pin = p->start_pin;
-            for(unsigned j = 0; j < updated_paths.size(); j++){
+            std::vector<Segment*> remove_list;
+            for(unsigned j = 0; j < p->segments.size(); j++){
                 auto &s = p->segments.at(j);
-                if(s->colinear(point)) {
+                if(s->colinear(point)){
                     // Split segment
                     if(!(point == s->startPoint() || point == s->endPoint())){
-
+                        Segment *new_segment = nullptr;
+                        if(s->z == 0){
+                            new_segment = new Segment(s->z, start_point.x, s->y, point.x);
+                            if(s->neighbor == start_point.x) s->neighbor = point.x;
+                            else s->x = point.x;
+                        }
+                        else if(s->z == 1){
+                            new_segment = new Segment(s->z, s->x, start_point.y, point.y);
+                            if(s->neighbor == start_point.y) s->neighbor = point.y;
+                            else s->y = point.y;
+                        }
+                        new_path->segments.push_back(new_segment);
                     }
                     // Assign to old one
                     else if(point == start_point){
-                        
+                        new_path->end_pin = start_point;
+                        p->end_pin = new_path->end_pin;
                     }
                     // Assign to new one
                     else{
-
+                        remove_list.push_back(s);
+                        new_path->segments.push_back(s);
+                        start_point = (s->startPoint() == start_point ? s->endPoint() : s->startPoint());
+                        new_path->end_pin = start_point;
+                        p->end_pin = new_path->end_pin;
                     }
+                    break;
                 }
-                start_point = (s->startPoint() == start_point ? s->endPoint() : s->startPoint()); 
+                else{
+                    if(s->z == 0){
+                        for(int k = s->getX(); k <= s->getNeighbor(); k++){
+                            // Find the iterator for the element to remove
+                            auto &cur_path = grid->graph.at(k).at(s->getY()).at(s->z)->cur_paths;
+                            auto it = std::find(cur_path.begin(), cur_path.end(), split_candidate);
+                            // If the element was found, remove it from the vector
+                            if (it != cur_path.end()) {
+                                cur_path.erase(it);
+                            }
+                            cur_path.push_back(new_path);
+                        }
+                    }
+                    else if(s->z == 1){
+                        for(int k = s->getY(); k <= s->getNeighbor(); k++){
+                            // Find the iterator for the element to remove
+                            auto &cur_path = grid->graph.at(k).at(s->getY()).at(s->z)->cur_paths;
+                            auto it = std::find(cur_path.begin(), cur_path.end(), split_candidate);
+                            // If the element was found, remove it from the vector
+                            if (it != cur_path.end()) {
+                                cur_path.erase(it);
+                            }
+                            cur_path.push_back(new_path);
+                        }
+                    }
+                    remove_list.push_back(s);
+                    new_path->segments.push_back(s);
+                    start_point = (s->startPoint() == start_point ? s->endPoint() : s->startPoint()); 
+                }
             }
+            for (auto it = p->segments.begin(); it != p->segments.end(); ) {
+                if (std::find(remove_list.begin(), remove_list.end(), *it) != remove_list.end()) {
+                    // Remove the element
+                    it = p->segments.erase(it);
+                } else {
+                    // Move to the next element
+                    ++it;
+                }
+            }
+            break;
         }
     }
+    if(new_path != nullptr)updated_paths.push_back(new_path);
+
 }
 bool Router::outOfBound(Coordinate3D p){
     if(p.x < 0 || p.x > this->layout->width) return true;
@@ -342,16 +401,30 @@ bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink, in
     /* Split Path */
     // Check source->paths contain the tmp_path->start_pin
     if(this->grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths.size() == 2){
-        if(!source->pinlist.count(tmp_path->start_pin)){
+        if(!source->pinlist.count(tmp_path->start_pin) && !source->pinlist.count(Coordinate3D{tmp_path->start_pin.x, tmp_path->start_pin.y, (tmp_path->start_pin.z + 1) % 2})){
             auto &split_candidate_path = this->grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths.at(0);
-            splitPaths(tmp_path->start_pin, split_candidate_path, source->paths);
+            splitPaths(this->grid, tmp_path->start_pin, split_candidate_path, source->paths);
         }
     }
     // Then check source->paths contain the tmp_path->end_pin
     else if(this->grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths.size() == 2){
-        if(!source->pinlist.count(tmp_path->end_pin)){
+        if(!source->pinlist.count(tmp_path->end_pin) && !source->pinlist.count(Coordinate3D{tmp_path->end_pin.x, tmp_path->end_pin.y, (tmp_path->end_pin.z + 1) % 2})){
             auto &split_candidate_path = this->grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths.at(0);
-            splitPaths(tmp_path->end_pin, split_candidate_path, source->paths);
+            splitPaths(this->grid, tmp_path->end_pin, split_candidate_path, source->paths);
+        }
+    }
+    // Check sink->paths contain the tmp_path->start_pin
+    if(this->grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths.size() == 2){
+        if(!sink->pinlist.count(tmp_path->start_pin) && !sink->pinlist.count(Coordinate3D{tmp_path->start_pin.x, tmp_path->start_pin.y, (tmp_path->start_pin.z + 1) % 2})){
+            auto &split_candidate_path = this->grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths.at(0);
+            splitPaths(this->grid, tmp_path->start_pin, split_candidate_path, sink->paths);
+        }
+    }
+    // Then check sink->paths contain the tmp_path->end_pin
+    else if(this->grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths.size() == 2){
+        if(!sink->pinlist.count(tmp_path->end_pin) && !sink->pinlist.count(Coordinate3D{tmp_path->end_pin.x, tmp_path->end_pin.y, (tmp_path->end_pin.z + 1) % 2})){
+            auto &split_candidate_path = this->grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths.at(0);
+            splitPaths(this->grid, tmp_path->end_pin, split_candidate_path, sink->paths);
         }
     }
     /* Post job cleanup */
