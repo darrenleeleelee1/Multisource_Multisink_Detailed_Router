@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import glob
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle

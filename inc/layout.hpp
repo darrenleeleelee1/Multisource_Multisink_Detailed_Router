@@ -290,6 +290,12 @@ public:
 		}
 		return sum;
 	}
+	bool checkIsPin(Coordinate3D target){
+		for(auto p : pins){
+			if(p == target) return true;
+		}
+		return false;
+	}
 	// including adding via
 	void segmentRegularize(){
 		for(auto &p : tree->getPath()){

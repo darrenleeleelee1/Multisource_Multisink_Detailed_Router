@@ -13,7 +13,7 @@ public:
         this->layout = l;
         this->grid = new Grid(l->width, l->height);
         // number of net + 1 means obstacle
-        for(auto o : l->obstacles) this->grid->setObstacles(l->netlist.size() + 1, o.start_point, o.end_point);
+        for(auto o : l->obstacles) this->grid->setObstacles(l->netlist.size(), o.start_point, o.end_point);
         for(auto n : l->netlist){
             for(auto p : n.pins) this->grid->setObstacles(n.id, p, p);
         }
@@ -28,4 +28,7 @@ public:
     bool pin2pin_maze_routing(Net *net, Coordinate3D source_node, Coordinate3D sink_node, int &reroute_status);
     bool tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink, int &reroute_status);
 };
+
+void erasePaths(Grid *grid, Path *erase_candidate, Tree *updated_tree);
+void mergePaths();
 
