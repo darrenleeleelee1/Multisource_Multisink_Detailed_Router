@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <tuple>
 #include "router.hpp"
 void Router::main(){
     this->twoPinNetDecomposition();
@@ -39,9 +40,8 @@ void Router::main(){
         n.initTrees();
         for(auto &tpn : n.two_pins_net){
             int reroute_state = 0; // 1 means source stuck, 2 means sink stuck
-            if(n.tree->at(tpn.first)->pinlist.size() > n.tree->at(tpn.second)->pinlist.size()) std::swap(tpn.first, tpn.second);
-            if(!tree2tree_maze_routing(&n, n.tree->at(tpn.first), n.tree->at(tpn.second), reroute_state)){
-                // TODO reroute
+            std::vector<std::tuple<Net*, int, int>> rip_up_pair; // TODO: store the rip_up_pair and rerote them(hint: find the subtree)
+            while(!tree2tree_maze_routing(&n, n.tree->at(tpn.first), n.tree->at(tpn.second), reroute_state)){
                 if(reroute_state == 1){
                     auto &reroute_vertex = n.pins.at(tpn.first);
                     for(unsigned i = 0; i < move_orientation.at(reroute_vertex.z).size(); i++){
@@ -50,7 +50,7 @@ void Router::main(){
                         if(static_cast<unsigned>(current_vertex->obstacle) == layout->netlist.size()) continue; // Is obstacles
                         auto &current_net = layout->netlist.at(current_vertex->obstacle);
                         if(!current_net.checkIsPin(current_vertex->coordinate)){
-                            std::cout << "1: " << current_vertex->cur_paths.size() << current_vertex->coordinate.toString() << "\n";
+                            // TODO:
                         }
                     }
                 }
@@ -62,17 +62,26 @@ void Router::main(){
                         if(static_cast<unsigned>(current_vertex->obstacle) == layout->netlist.size()) continue; // Is obstacles
                         auto &current_net = layout->netlist.at(current_vertex->obstacle);
                         if(!current_net.checkIsPin(current_vertex->coordinate)){
-                            erasePaths(grid, current_vertex->cur_paths.at(0), current_net.tree);
-                            std::cout << "2: " << current_vertex->cur_paths.size() << current_vertex->coordinate.toString() << "\n";
+                            auto &rip_up_candidate = current_vertex->cur_edges.at(0);
+                            const auto &[souce_index, sink_index] = ripUpEdges(grid, rip_up_candidate, current_net.tree);
+                            std::cout << souce_index << ", " << sink_index << "\n";
+                            rip_up_pair.push_back(std::make_tuple(&current_net, souce_index, sink_index));
                         }
                     }
                 }
             }
-            else {
-                if (!n.tree->mergeTree(tpn.first, tpn.second)) {
+            if (!n.tree->mergeTree(tpn.first, tpn.second)) {
+                throw std::runtime_error("Error: merge tree failed");
+            }
+            for(auto rup : rip_up_pair){
+                const auto &[current_net, souce_index, sink_index] = rup;
+                while(!tree2tree_maze_routing(current_net, current_net->tree->at(souce_index), current_net->tree->at(sink_index), reroute_state)){
+                }
+                if (!current_net->tree->mergeTree(souce_index, sink_index)) {
                     throw std::runtime_error("Error: merge tree failed");
                 }
             }
+            
         }
     }
 }

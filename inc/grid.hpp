@@ -5,7 +5,7 @@
 class Vertex{
 public:
     Coordinate3D coordinate;
-    std::vector<Path*> cur_paths;
+    std::vector<Edge*> cur_edges;
     Vertex *prevertex = nullptr;
     int distance = INT32_MAX;
     int obstacle = -1;

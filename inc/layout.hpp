@@ -3,7 +3,8 @@
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
-
+class Tree;
+class Net;
 class Coordinate3D{
 public:
 	int x, y, z;
@@ -148,14 +149,14 @@ public:
 		return 0;
 	}
 };
-class Path{
+class Edge{
 public:
 	std::vector<Segment*> segments;
 	Coordinate3D start_pin, end_pin;
-	Path() {
+	Edge() {
 		this->segments.resize(0);
 	}
-	~Path() {
+	~Edge() {
 		for (auto s : segments) {
 			delete s;
 		}
@@ -163,16 +164,16 @@ public:
 };
 class Subtree{
 public:
-    std::vector<Path*> paths; // stores the paths in each subtree
+    std::vector<Edge*> edges; // stores the edges in each subtree
 	std::unordered_set<Coordinate3D> pinlist;
 	
 	Subtree() {}
 	Subtree(Coordinate3D pin) {
-		paths.resize(0);
+		edges.resize(0);
 		this->pinlist.insert(pin);
 	}
 	~Subtree(){
-		for(auto p : paths){
+		for(auto p : edges){
 			delete p;
 		}
 	}
@@ -188,9 +189,10 @@ public:
     std::vector<int> size; // stores the size of each subtree
 	std::vector<Subtree*> subtrees;
 	std::unordered_map<Coordinate3D, int> coordinate2index;
-	std::unordered_map<int, Coordinate3D> index2coordinate;
+	std::unordered_set<Coordinate3D> pinset;
 	Tree() {}
-	Tree(std::vector<Coordinate3D> &pins) {
+	Tree(std::vector<Coordinate3D> pins) {
+		pinset.insert(pins.begin(), pins.end());
 		unsigned n = pins.size();
 		this->parents.resize(n, -1);
         this->size.resize(n, 1);
@@ -198,7 +200,6 @@ public:
 		for (unsigned i = 0; i < n; i++){
 			subtrees.at(i) = (new Subtree(pins.at(i)));
 			this->coordinate2index[pins.at(i)] = i;
-			this->index2coordinate[i] = pins.at(i);
 		}
 	}
 	Subtree* at(int index){
@@ -222,9 +223,9 @@ public:
             }
             parents.at(y_root) = x_root;
             size.at(x_root) += size.at(y_root);
-            // merge paths
-            subtrees.at(x_root)->paths.insert(subtrees.at(x_root)->paths.end(), subtrees.at(y_root)->paths.begin(), subtrees.at(y_root)->paths.end());
-            subtrees.at(y_root)->paths.clear();
+            // merge edges
+            subtrees.at(x_root)->edges.insert(subtrees.at(x_root)->edges.end(), subtrees.at(y_root)->edges.begin(), subtrees.at(y_root)->edges.end());
+            subtrees.at(y_root)->edges.clear();
 			// merge pinlist
 			subtrees.at(x_root)->pinlist.insert(subtrees.at(y_root)->pinlist.begin(), subtrees.at(y_root)->pinlist.end());
             subtrees.at(y_root)->pinlist.clear();
@@ -232,17 +233,69 @@ public:
         }
         return false;
     }
-	std::vector<Path*> getPath(){
+	void reconstructTree(){
 		std::unordered_set<int> roots;
-		std::vector<Path*> all_paths;
+		// Store all the edges to new_edges
+		std::vector<Edge*> all_edges;
 		for(unsigned i = 0; i < coordinate2index.size(); i++){
 			int root = find(i);
 			if(!roots.count(root)){
 				roots.insert(root);
-				all_paths.insert(all_paths.end(), subtrees.at(root)->paths.begin(), subtrees.at(root)->paths.end());
+				all_edges.insert(all_edges.end(), subtrees.at(root)->edges.begin(), subtrees.at(root)->edges.end());
+				subtrees.at(root)->edges.clear();
 			}
 		}
-		return all_paths;
+		std::vector<Edge*> new_edges;
+		for (auto edge : all_edges) {
+			new_edges.push_back(new Edge(*edge));
+		}
+		for(unsigned i = 0; i < subtrees.size(); i++){
+			delete subtrees.at(i);
+		}
+		// Reinitilize parents, size, subtree, coordinate2index
+		unsigned n = pinset.size();
+		parents.assign(n, -1);
+        size.assign(n, 1);
+		subtrees.resize(n);
+		int cnt = 0;
+		for (auto p : pinset){
+			subtrees.at(cnt) = (new Subtree(p));
+			coordinate2index[p] = cnt;
+			cnt++;
+		}
+		for(auto e : new_edges){
+			if(!coordinate2index.count(e->start_pin)){
+				parents.push_back(-1);
+				size.push_back(1);
+				subtrees.push_back(new Subtree(e->start_pin));
+				coordinate2index[e->start_pin] = cnt++;
+			}
+			if(!coordinate2index.count(e->end_pin)){
+				parents.push_back(-1);
+				size.push_back(1);
+				subtrees.push_back(new Subtree(e->end_pin));
+				coordinate2index[e->end_pin] = cnt++;
+			}
+		}
+		for(auto e : new_edges){
+			subtrees.at(coordinate2index[e->start_pin])->edges.push_back(e);
+			if(!mergeTree(coordinate2index[e->start_pin], coordinate2index[e->end_pin])){
+				throw std::runtime_error("Failure: not sure what this behavior");
+			}
+		}
+
+	}
+	std::vector<Edge*> getEdge(){
+		std::unordered_set<int> roots;
+		std::vector<Edge*> all_edges;
+		for(unsigned i = 0; i < coordinate2index.size(); i++){
+			int root = find(i);
+			if(!roots.count(root)){
+				roots.insert(root);
+				all_edges.insert(all_edges.end(), subtrees.at(root)->edges.begin(), subtrees.at(root)->edges.end());
+			}
+		}
+		return all_edges;
 	}
 };
 class Net{
@@ -283,7 +336,7 @@ public:
 	}
 	int getWirelength(){
 		int sum = 0;
-		for(auto &p : tree->getPath()){
+		for(auto &p : tree->getEdge()){
 			for(auto &s : p->segments){
 				sum += s->getWirelength();
 			}
@@ -298,7 +351,7 @@ public:
 	}
 	// including adding via
 	void segmentRegularize(){
-		for(auto &p : tree->getPath()){
+		for(auto &p : tree->getEdge()){
 			if(p->segments.size() == 0){
 				if(p->start_pin == p->end_pin){
 					this->vialist.emplace(p->start_pin.x, p->start_pin.y);

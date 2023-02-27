@@ -4,19 +4,19 @@ CC = g++
 # Specify the flags to use during compilation
 CFLAGS = -std=c++17 -Wall -O0 -g
 
-# Specify the path to the project's source files
+# Specify the edge to the project's source files
 SRC_DIR = src
 
-# Specify the search paths for source files
+# Specify the search edges for source files
 VPATH = $(SRC_DIR)
 
-# Specify the path to the project's header files
+# Specify the edge to the project's header files
 INCLUDE_DIR = inc
 
-# Specify the search paths for header files
+# Specify the search edges for header files
 INCLUDE_PATHS = -I $(INCLUDE_DIR)
 
-# Specify the path to the project's object files
+# Specify the edge to the project's object files
 OBJ_DIR = obj
 
 # Specify the name of the executable to generate

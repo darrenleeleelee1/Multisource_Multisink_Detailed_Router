@@ -29,6 +29,6 @@ public:
     bool tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink, int &reroute_status);
 };
 
-void erasePaths(Grid *grid, Path *erase_candidate, Tree *updated_tree);
-void mergePaths();
+std::pair<int, int> ripUpEdges(Grid *grid, Edge *rip_up_candidate, Tree *updated_tree);
+void mergeEdges();
 

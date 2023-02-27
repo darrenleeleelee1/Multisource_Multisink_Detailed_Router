@@ -15,7 +15,7 @@ jobs:
 
     - name: show dependency
       run: |
-          echo "gcc path: $(which gcc)"
+          echo "gcc edge: $(which gcc)"
           echo "gcc version: $(gcc --version)"
 
     - name: create obj directory

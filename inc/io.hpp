@@ -20,8 +20,8 @@ void tokenLine(std::vector<std::string> &tokens, std::string line){
     }
 }
 
-void readLayout(Layout *layout, char const *file_path){
-    std::ifstream in_file(file_path);
+void readLayout(Layout *layout, char const *file_edge){
+    std::ifstream in_file(file_edge);
     std::string line;
     std::vector<std::string> tokens;
     while(getline(in_file, line)){
@@ -81,8 +81,8 @@ void readLayout(Layout *layout, char const *file_path){
     }
 }
 
-void writeLayout(Layout *layout, char const *file_path){
-    std::ofstream out_file(file_path, std::ofstream::trunc);
+void writeLayout(Layout *layout, char const *file_edge){
+    std::ofstream out_file(file_edge, std::ofstream::trunc);
     out_file << "Width " << layout->width << "\n";
     out_file << "Height " << layout->height << "\n";
     out_file << "Layer " << layout->num_of_layers << "\n";
