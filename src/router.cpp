@@ -508,16 +508,13 @@ bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink, in
     }
     /* Backtracking */
     // Failed tree2tree routing
-    if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->distance == 0){
-        if(!this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_sink){
+    if(this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->distance == 0
+        || this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->distance == 0){
             std::cout << "Failed: Net#" << net->id << " " << source->showPins() << "- " << sink->showPins() << " routing failed\n";
             success = false;
             reroute_status = 1;
-
-        }
     }
-    else if(!this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->is_sink
-            && !this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at((current->coordinate.z + 1) % 2)->is_sink){
+    else if(!this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->is_sink){
         std::cout << "Failed: Net#" << net->id << " " << source->showPins() << "- " << sink->showPins() << " routing failed\n";
         success = false;
         reroute_status = 2;
