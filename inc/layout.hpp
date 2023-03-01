@@ -156,6 +156,14 @@ public:
 	Edge() {
 		this->segments.resize(0);
 	}
+	Edge(const Edge& other) {
+        this->segments.resize(0);
+        for (auto s : other.segments) {
+            this->segments.push_back(new Segment(*s));
+        }
+        this->start_pin = other.start_pin;
+        this->end_pin = other.end_pin;
+    }
 	~Edge() {
 		for (auto s : segments) {
 			delete s;
@@ -173,8 +181,8 @@ public:
 		this->pinlist.insert(pin);
 	}
 	~Subtree(){
-		for(auto p : edges){
-			delete p;
+		for(auto e : edges){
+			delete e;
 		}
 	}
 	std::string showPins(){
@@ -233,7 +241,7 @@ public:
         }
         return false;
     }
-	void reconstructTree(){
+	std::pair<std::vector<Edge*>, std::vector<Edge*>> reconstructTree_phase1(){
 		std::unordered_set<int> roots;
 		// Store all the edges to new_edges
 		std::vector<Edge*> all_edges;
@@ -242,13 +250,17 @@ public:
 			if(!roots.count(root)){
 				roots.insert(root);
 				all_edges.insert(all_edges.end(), subtrees.at(root)->edges.begin(), subtrees.at(root)->edges.end());
-				subtrees.at(root)->edges.clear();
 			}
 		}
+
 		std::vector<Edge*> new_edges;
 		for (auto edge : all_edges) {
 			new_edges.push_back(new Edge(*edge));
 		}
+
+		return std::make_pair(all_edges, new_edges);
+	}
+	void reconstructTree_phase2(std::vector<Edge*> new_edges){
 		for(unsigned i = 0; i < subtrees.size(); i++){
 			delete subtrees.at(i);
 		}
@@ -283,7 +295,6 @@ public:
 				throw std::runtime_error("Failure: not sure what this behavior");
 			}
 		}
-
 	}
 	std::vector<Edge*> getEdge(){
 		std::unordered_set<int> roots;
@@ -293,6 +304,7 @@ public:
 			if(!roots.count(root)){
 				roots.insert(root);
 				all_edges.insert(all_edges.end(), subtrees.at(root)->edges.begin(), subtrees.at(root)->edges.end());
+				// break; // Assume correct, it will only have one root
 			}
 		}
 		return all_edges;

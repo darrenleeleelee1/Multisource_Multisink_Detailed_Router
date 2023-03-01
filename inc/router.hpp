@@ -25,8 +25,8 @@ public:
     void main();
     void twoPinNetDecomposition();
     bool outOfBound(Coordinate3D p);
-    bool pin2pin_maze_routing(Net *net, Coordinate3D source_node, Coordinate3D sink_node, int &reroute_status);
-    bool tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink, int &reroute_status);
+    bool tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink);
+    Edge tree2tree_maze_routing(Grid *tmp_grid, Net *net, Subtree *source, Subtree *sink);
 };
 
 std::pair<int, int> ripUpEdges(Grid *grid, Edge *rip_up_candidate, Tree *updated_tree);

@@ -44,46 +44,54 @@ void Router::main(){
             std::vector<std::tuple<Net*, int, int>> rip_up_pair;
             if(!tree2tree_maze_routing(&n, n.tree->at(tpn.first), n.tree->at(tpn.second))){
                 Edge tmp_edge = tree2tree_maze_routing(pin_and_obstacle_grid, &n, n.tree->at(tpn.first), n.tree->at(tpn.second));
-                std::vector<Edge*> rip_up_candidate;
-                std::unordered_set<Edge*> remove_duplicate;
-                for(auto s : tmp_edge.segments){
-                    if(s->z == 0){
-                        for(int i = s->getX(); i <= s->getNeighbor(); i++){
-                            for(auto c : grid->graph.at(i).at(s->getY()).at(s->z)->cur_edges){
-                                if(remove_duplicate.count(c)) continue;
-                                remove_duplicate.insert(c);
-                                rip_up_candidate.push_back(c);
-                            }
-                        }
-                    }
-                    else if(s->z == 1){
-                        for(int i = s->getY(); i <= s->getNeighbor(); i++){
-                            for(auto c : grid->graph.at(s->getX()).at(i).at(s->z)->cur_edges){
-                                if(remove_duplicate.count(c)) continue;
-                                remove_duplicate.insert(c);
-                                rip_up_candidate.push_back(c);
-                            }
-                        }
-                    }
-                }
-                bool find_candidate = false;
+
+                Edge *rip_up_candidate = nullptr;
                 do{
-                    find_candidate = false;
-                    while(rip_up_candidate.size() > 0){
-                        auto r = rip_up_candidate.front(); rip_up_candidate.erase(rip_up_candidate.begin());
-
-                        for(auto s : r->segments){
-                            std::cout << s->toString() << "\n";
+                    rip_up_candidate = nullptr;
+                    for(auto s : tmp_edge.segments){
+                        if(s->z == 0){
+                            for(int i = s->getX(); i <= s->getNeighbor(); i++){
+                                if(grid->graph.at(i).at(s->getY()).at(s->z)->cur_edges.size() > 0){
+                                    rip_up_candidate = grid->graph.at(i).at(s->getY()).at(s->z)->cur_edges.at(0);
+                                    if(rip_up_candidate != nullptr){
+                                        // degbug
+                                        for(auto s : rip_up_candidate->segments){
+                                            std::cout << s->toString() << "\n";
+                                        }
+                                        // degbug
+                                        std::cout << "\n";
+                                        auto &current_net = layout->netlist.at(grid->graph.at(i).at(s->getY()).at(s->z)->obstacle);
+                                        const auto &[souce_index, sink_index] = ripUpEdges(grid, rip_up_candidate, current_net.tree);
+                                        rip_up_pair.push_back(std::make_tuple(&current_net, souce_index, sink_index));
+                                    }
+                                    break;
+                                }
+                            }
                         }
-                        std::cout << "\n";
-
-                        auto &current_net = layout->netlist.at(grid->graph.at(r->start_pin.x).at(r->start_pin.y).at(r->start_pin.z)->obstacle);
-                        const auto &[souce_index, sink_index] = ripUpEdges(grid, r, current_net.tree, rip_up_candidate);
-                        rip_up_pair.push_back(std::make_tuple(&current_net, souce_index, sink_index));
-                        find_candidate = true;
-                        break;
+                        else if(s->z == 1){
+                            for(int i = s->getY(); i <= s->getNeighbor(); i++){
+                                if(grid->graph.at(s->getX()).at(i).at(s->z)->cur_edges.size() > 0){
+                                    rip_up_candidate = grid->graph.at(s->getX()).at(i).at(s->z)->cur_edges.at(0);
+                                    if(rip_up_candidate != nullptr){
+                                        // degbug
+                                        for(auto s : rip_up_candidate->segments){
+                                            std::cout << s->toString() << "\n";
+                                        }
+                                        std::cout << "\n";
+                                        // degbug
+                                        auto &current_net = layout->netlist.at(grid->graph.at(s->getX()).at(i).at(s->z)->obstacle);
+                                        const auto &[souce_index, sink_index] = ripUpEdges(grid, rip_up_candidate, current_net.tree);
+                                        rip_up_pair.push_back(std::make_tuple(&current_net, souce_index, sink_index));
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        if(rip_up_candidate != nullptr) break;
                     }
-                }while(find_candidate);
+                    
+                }while(rip_up_candidate != nullptr);
+
 
                 // rip_up_pair.push_back(std::make_tuple(&n, tpn.first, tpn.second));
                 rip_up_pair.insert(rip_up_pair.begin(), std::make_tuple(&n, tpn.first, tpn.second));
@@ -105,7 +113,6 @@ void Router::main(){
                     std::cout << p.toString() << ", ";
                 }
                 std::cout << "\n";
-                continue;
                 // degbug
                 if(!tree2tree_maze_routing(current_net, current_net->tree->at(souce_index), current_net->tree->at(sink_index))){
                     throw std::runtime_error("Error: need more rip-up");

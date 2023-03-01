@@ -40,6 +40,30 @@ public:
             }
         }
     }
+    Grid(Layout *l){
+        int width = l->width, height = l->height;
+        int z_depth = 2;
+        
+        graph.resize(static_cast<unsigned>(width + 1));
+        
+        for(int i = 0; i <= width; i++){
+            graph.at(i).resize(height + 1);
+        }
+        
+        for(int i = 0; i <= width; i++){
+            for(int j = 0; j <= height; j++){
+                graph.at(i).at(j).resize(z_depth);
+                for(int k = 0; k < z_depth; k++){
+                    graph.at(i).at(j).at(k) = new Vertex{i, j, k, false, false};
+                }
+            }
+        }
+        // Set the obstacles and pins
+        for(auto o : l->obstacles) this->setObstacles(l->netlist.size(), o.start_point, o.end_point);
+        for(auto _n : l->netlist){
+            for(auto p : _n.pins) this->setObstacles(_n.id, p, p);
+        }
+    }
     ~Grid() {
         for (unsigned i = 0; i < graph.size(); i++) {
             for (unsigned j = 0; j < graph.at(i).size(); j++) {
@@ -93,6 +117,18 @@ public:
             setDistanceZero(s);
         }
     }
+    void setObstacles(int net_id, Segment seg){
+        if(seg.z == 0){
+            for(int i = std::min(seg.x, seg.neighbor); i <= std::max(seg.x, seg.neighbor); i++){
+                this->graph.at(i).at(seg.y).at(seg.z)->obstacle = net_id;
+            }
+        }
+        else{
+            for(int i = std::min(seg.y, seg.neighbor); i <= std::max(seg.y, seg.neighbor); i++){
+                this->graph.at(seg.x).at(i).at(seg.z)->obstacle = net_id;
+            }
+        }
+    }
     void setObstacles(int net_id, Coordinate3D start_point, Coordinate3D end_point){
         // pins
         if(start_point == end_point){
@@ -113,9 +149,12 @@ public:
             }
         }
     }
+    void setObstacles(int net_id, Coordinate3D pin){
+        this->graph.at(pin.x).at(pin.y).at(pin.z)->obstacle = net_id;
+    }
     void setObstacles(int net_id, std::vector<Coordinate3D> pins){
         for(auto v : pins){
-            this->graph.at(v.x).at(v.y).at(v.z)->obstacle = net_id;
+            setObstacles(net_id, v);
         }
     }
     void resetObstacles(Segment seg){
@@ -130,9 +169,12 @@ public:
             }
         }
     }
+    void resetObstacles(Coordinate3D pin){
+        this->graph.at(pin.x).at(pin.y).at(pin.z)->obstacle = -1;
+    }
     void resetObstacles(std::vector<Coordinate3D> pins){
         for(auto v : pins){
-            this->graph.at(v.x).at(v.y).at(v.z)->obstacle = -1;
+            resetObstacles(v);
         }
     }
     void setSinks(Segment seg){
