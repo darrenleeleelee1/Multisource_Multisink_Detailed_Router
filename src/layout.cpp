@@ -3,19 +3,19 @@
 #include "layout.hpp"
 class Kruskal{
 public:
-    class Edge{
+    class Path{
     public:
         int from, to; // In this case is undirected
         int cost;
-        Edge(){}
-        Edge(int f, int t, int c) : from(f), to(t), cost(c) {}
-        bool operator<(const Edge other){
+        Path(){}
+        Path(int f, int t, int c) : from(f), to(t), cost(c) {}
+        bool operator<(const Path other){
             return cost < other.cost;
         }
     };
     Net *net;
     std::vector<int> parents;
-    std::vector<Kruskal::Edge> edges;
+    std::vector<Kruskal::Path> paths;
     Kruskal(){}
     Kruskal(Net *n, int via_cost, int horizontal_segments_cost, int vertical_segment_cost){
         net = n;
@@ -32,7 +32,7 @@ public:
                                     - std::min(n->pins.at(i).y - n->pins.at(j).y, n->pins.at(j).y - n->pins.at(i).y);
                 if(y_segment != 0) sum_cost += 2 * via_cost;
                 sum_cost += x_segment * horizontal_segments_cost + y_segment * vertical_segment_cost;
-                this->edges.emplace_back(i, j, sum_cost);
+                this->paths.emplace_back(i, j, sum_cost);
             }
         }
     }
@@ -56,18 +56,18 @@ public:
         else return false;
     }
     int cost_rmst(){
-        std::sort(this->edges.begin(), this->edges.end());
+        std::sort(this->paths.begin(), this->paths.end());
         int ans = 0;
-        unsigned edge_cnt = 0;
-        for(unsigned i = 0; i < this->edges.size(); i++){
-            if(Kruskal::uni(this->edges.at(i).from, this->edges.at(i).to)){
-                ans += this->edges.at(i).cost;
+        unsigned path_cnt = 0;
+        for(unsigned i = 0; i < this->paths.size(); i++){
+            if(Kruskal::uni(this->paths.at(i).from, this->paths.at(i).to)){
+                ans += this->paths.at(i).cost;
                 // store the two pin nets
-                this->net->two_pins_net.push_back(std::make_pair(this->edges.at(i).from, this->edges.at(i).to));
-                if(++edge_cnt == this->parents.size() - 1) break;
+                this->net->two_pins_net.push_back(std::make_pair(this->paths.at(i).from, this->paths.at(i).to));
+                if(++path_cnt == this->parents.size() - 1) break;
             }
         }
-        if(edge_cnt == this->parents.size() - 1) return ans;
+        if(path_cnt == this->parents.size() - 1) return ans;
         else return -1;// means can't found spanning tree
     }
 };

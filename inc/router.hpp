@@ -26,9 +26,9 @@ public:
     void twoPinNetDecomposition();
     bool outOfBound(Coordinate3D p);
     bool tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink);
-    Edge tree2tree_maze_routing(Grid *tmp_grid, Net *net, Subtree *source, Subtree *sink);
+    Path tree2tree_maze_routing(Grid *tmp_grid, Net *net, Subtree *source, Subtree *sink);
 };
 
-std::pair<int, int> ripUpEdges(Grid *grid, Edge *rip_up_candidate, Tree *updated_tree);
-void mergeEdges();
+std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated_tree);
+void mergePaths();
 

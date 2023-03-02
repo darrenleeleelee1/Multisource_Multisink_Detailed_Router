@@ -43,16 +43,16 @@ void Router::main(){
         for(auto &tpn : n.two_pins_net){
             std::vector<std::tuple<Net*, int, int>> rip_up_pair;
             if(!tree2tree_maze_routing(&n, n.tree->at(tpn.first), n.tree->at(tpn.second))){
-                Edge tmp_edge = tree2tree_maze_routing(pin_and_obstacle_grid, &n, n.tree->at(tpn.first), n.tree->at(tpn.second));
+                Path tmp_path = tree2tree_maze_routing(pin_and_obstacle_grid, &n, n.tree->at(tpn.first), n.tree->at(tpn.second));
 
-                Edge *rip_up_candidate = nullptr;
+                Path *rip_up_candidate = nullptr;
                 do{
                     rip_up_candidate = nullptr;
-                    for(auto s : tmp_edge.segments){
+                    for(auto s : tmp_path.segments){
                         if(s->z == 0){
                             for(int i = s->getX(); i <= s->getNeighbor(); i++){
-                                if(grid->graph.at(i).at(s->getY()).at(s->z)->cur_edges.size() > 0){
-                                    rip_up_candidate = grid->graph.at(i).at(s->getY()).at(s->z)->cur_edges.at(0);
+                                if(grid->graph.at(i).at(s->getY()).at(s->z)->cur_paths.size() > 0){
+                                    rip_up_candidate = grid->graph.at(i).at(s->getY()).at(s->z)->cur_paths.at(0);
                                     if(rip_up_candidate != nullptr){
                                         // degbug
                                         for(auto s : rip_up_candidate->segments){
@@ -61,7 +61,7 @@ void Router::main(){
                                         // degbug
                                         std::cout << "\n";
                                         auto &current_net = layout->netlist.at(grid->graph.at(i).at(s->getY()).at(s->z)->obstacle);
-                                        const auto &[souce_index, sink_index] = ripUpEdges(grid, rip_up_candidate, current_net.tree);
+                                        const auto &[souce_index, sink_index] = ripUpPaths(grid, rip_up_candidate, current_net.tree);
                                         rip_up_pair.push_back(std::make_tuple(&current_net, souce_index, sink_index));
                                     }
                                     break;
@@ -70,8 +70,8 @@ void Router::main(){
                         }
                         else if(s->z == 1){
                             for(int i = s->getY(); i <= s->getNeighbor(); i++){
-                                if(grid->graph.at(s->getX()).at(i).at(s->z)->cur_edges.size() > 0){
-                                    rip_up_candidate = grid->graph.at(s->getX()).at(i).at(s->z)->cur_edges.at(0);
+                                if(grid->graph.at(s->getX()).at(i).at(s->z)->cur_paths.size() > 0){
+                                    rip_up_candidate = grid->graph.at(s->getX()).at(i).at(s->z)->cur_paths.at(0);
                                     if(rip_up_candidate != nullptr){
                                         // degbug
                                         for(auto s : rip_up_candidate->segments){
@@ -80,7 +80,7 @@ void Router::main(){
                                         std::cout << "\n";
                                         // degbug
                                         auto &current_net = layout->netlist.at(grid->graph.at(s->getX()).at(i).at(s->z)->obstacle);
-                                        const auto &[souce_index, sink_index] = ripUpEdges(grid, rip_up_candidate, current_net.tree);
+                                        const auto &[souce_index, sink_index] = ripUpPaths(grid, rip_up_candidate, current_net.tree);
                                         rip_up_pair.push_back(std::make_tuple(&current_net, souce_index, sink_index));
                                     }
                                     break;
@@ -123,22 +123,22 @@ void Router::main(){
             }
         }
         // debug test path is correct set on the grid
-        for(auto e : n.tree->getEdge()){
+        for(auto e : n.tree->getPath()){
             bool find = false;
-            for(auto t : grid->graph.at(e->start_pin.x).at(e->start_pin.y).at(e->start_pin.z)->cur_edges){
+            for(auto t : grid->graph.at(e->start_pin.x).at(e->start_pin.y).at(e->start_pin.z)->cur_paths){
                 if(t == e) find = true;
             }
             if(!find) {
-                std::cout << "Error: Net#" + std::to_string(n.id) <<  " Edge#" << e->start_pin.toString() << " - " 
+                std::cout << "Error: Net#" + std::to_string(n.id) <<  " Path#" << e->start_pin.toString() << " - " 
                     << e->end_pin.toString() << " Grid not contain " + Coordinate3D{e->start_pin.x, e->start_pin.y, e->start_pin.z}.toString() + "\n";
                 throw std::runtime_error("Read the error message");
             }
             find = false;
-            for(auto t : grid->graph.at(e->end_pin.x).at(e->end_pin.y).at(e->end_pin.z)->cur_edges){
+            for(auto t : grid->graph.at(e->end_pin.x).at(e->end_pin.y).at(e->end_pin.z)->cur_paths){
                 if(t == e) find = true;
             }
             if(!find) {
-                std::cout << "Error: Net#" + std::to_string(n.id) <<  " Edge#" << e->start_pin.toString() << " - " 
+                std::cout << "Error: Net#" + std::to_string(n.id) <<  " Path#" << e->start_pin.toString() << " - " 
                     << e->end_pin.toString() << " Grid not contain " + Coordinate3D{e->end_pin.x, e->end_pin.y, e->end_pin.z}.toString() + "\n";
                 throw std::runtime_error("Read the error message");
             }
@@ -146,7 +146,7 @@ void Router::main(){
             for(auto s : e->segments){
                 if(s->z == 0){
                     for(int i = s->getX(); i <= s->getNeighbor(); i++){
-                        for(auto t : grid->graph.at(i).at(s->getY()).at(s->z)->cur_edges){
+                        for(auto t : grid->graph.at(i).at(s->getY()).at(s->z)->cur_paths){
                             if(t == e) find = true;
                         }
                         if(!find){
@@ -157,7 +157,7 @@ void Router::main(){
                 }
                 else if(s->z == 1){
                     for(int i = s->getY(); i <= s->getNeighbor(); i++){
-                        for(auto t : grid->graph.at(s->getX()).at(i).at(s->z)->cur_edges){
+                        for(auto t : grid->graph.at(s->getX()).at(i).at(s->z)->cur_paths){
                             if(t == e) find = true;
                         }
                         if(!find){
