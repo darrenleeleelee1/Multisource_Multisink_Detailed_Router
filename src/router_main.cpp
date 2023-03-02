@@ -37,7 +37,6 @@ void Router::main(){
     //     else return a.pins.size() > b.pins.size();
     // });
     Grid *pin_and_obstacle_grid = new Grid(this->layout);
-
     for(auto &n : layout->netlist){
         n.initTrees();
         for(auto &tpn : n.two_pins_net){
@@ -99,6 +98,7 @@ void Router::main(){
             else if(!n.tree->mergeTree(tpn.first, tpn.second)) {
                 throw std::runtime_error("Error: merge tree error");
             }
+            /*
             for(auto rup : rip_up_pair){
                 const auto &[current_net, souce_index, sink_index] = rup;
                 // degbug
@@ -121,7 +121,46 @@ void Router::main(){
                     throw std::runtime_error("Error: merge tree error");
                 }
             }
-            
+            */
         }
+        // debug test path is correct set on the grid
+        for(auto e : n.tree->getEdge()){
+            bool find = false;
+            for(auto t : grid->graph.at(e->start_pin.x).at(e->start_pin.y).at(e->start_pin.z)->cur_edges){
+                if(t == e) find = true;
+            }
+            if(!find) {
+                std::cout << "Error: Net#" + std::to_string(n.id) <<  " Edge#" << e->start_pin.toString() << " - " 
+                    << e->end_pin.toString() << " Grid not contain " + Coordinate3D{e->start_pin.x, e->start_pin.y, e->start_pin.z}.toString() + "\n";
+            }
+            find = false;
+            for(auto t : grid->graph.at(e->end_pin.x).at(e->end_pin.y).at(e->end_pin.z)->cur_edges){
+                if(t == e) find = true;
+            }
+            if(!find) {
+                std::cout << "Error: Net#" + std::to_string(n.id) <<  " Edge#" << e->start_pin.toString() << " - " 
+                    << e->end_pin.toString() << " Grid not contain " + Coordinate3D{e->end_pin.x, e->end_pin.y, e->end_pin.z}.toString() + "\n";
+            }
+
+            for(auto s : e->segments){
+                if(s->z == 0){
+                    for(int i = s->getX(); i <= s->getNeighbor(); i++){
+                        for(auto t : grid->graph.at(i).at(s->getY()).at(s->z)->cur_edges){
+                            if(t == e) find = true;
+                        }
+                        if(!find) std::cout << ("Error: Net#" + std::to_string(n.id) + " Grid not set " + s->toString() + " well\n");
+                    }
+                }
+                else if(s->z == 1){
+                    for(int i = s->getY(); i <= s->getNeighbor(); i++){
+                        for(auto t : grid->graph.at(s->getX()).at(i).at(s->z)->cur_edges){
+                            if(t == e) find = true;
+                        }
+                        if(!find) std::cout << ("Error: Net#" + std::to_string(n.id) + " Grid not set " + s->toString() + " well\n");
+                    }
+                }
+            }
+        }
+        // debug test path is correct set on the grid
     }
 }

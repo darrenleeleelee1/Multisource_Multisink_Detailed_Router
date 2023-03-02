@@ -14,128 +14,59 @@ int mazeRouteCost(Router *R, Coordinate3D sp, Coordinate3D ep){
     cost += std::abs(sp.x - ep.x) * R->layout->horizontal_segment_cost + std::abs(sp.y - ep.y) * R->layout->vertical_segment_cost;
     return cost;
 }
+void updateGridCurEdge(Grid *grid, Edge *split_candidate, Edge *new_edge, Coordinate3D p){
+    // Find the iterator for the element to remove
+    auto &cur_edge = grid->graph.at(p.x).at(p.y).at(p.z)->cur_edges;
+    auto it = std::find(cur_edge.begin(), cur_edge.end(), split_candidate);
+    // If the element was found, remove it from the vector
+    if (it != cur_edge.end()) {
+        cur_edge.erase(it);
+    }
+    // Check new_edge is not already in cur_edges
+    bool find = false;
+    for(auto e : cur_edge){
+        if(e == new_edge) find = true;
+        if(find) break;
+    }
+    if(!find) cur_edge.push_back(new_edge);
+}
 void updateGridCurEdge(Grid *grid, Edge *split_candidate, Edge *new_edge, Segment *s){
     if(s->z == 0){
         for(int k = s->getX(); k <= s->getNeighbor(); k++){
-            // Find the iterator for the element to remove
-            auto &cur_edge = grid->graph.at(k).at(s->getY()).at(s->z)->cur_edges;
-            auto it = std::find(cur_edge.begin(), cur_edge.end(), split_candidate);
-            // If the element was found, remove it from the vector
-            if (it != cur_edge.end()) {
-                cur_edge.erase(it);
-            }
-            cur_edge.push_back(new_edge);
+            updateGridCurEdge(grid, split_candidate, new_edge, Coordinate3D{k, s->getY(), s->z});
         }
     }
     else if(s->z == 1){
         for(int k = s->getY(); k <= s->getNeighbor(); k++){
-            // Find the iterator for the element to remove
-            auto &cur_edge = grid->graph.at(s->getX()).at(k).at(s->z)->cur_edges;
-            auto it = std::find(cur_edge.begin(), cur_edge.end(), split_candidate);
-            // If the element was found, remove it from the vector
-            if (it != cur_edge.end()) {
-                cur_edge.erase(it);
-            }
-            cur_edge.push_back(new_edge);
+            updateGridCurEdge(grid, split_candidate, new_edge, Coordinate3D{s->getX(), k, s->z});
         }
     }
-}
-bool splitEdges(Grid *grid, Coordinate3D point, Edge *split_candidate, std::vector<Edge*> &updated_edges){
-    for(unsigned i = 0; i < updated_edges.size(); i++){
-        auto &p = updated_edges.at(i);
-        if(p == split_candidate){
-            Coordinate3D start_point = p->start_pin;
-            Edge *new_edge = new Edge();
-            bool complete_edge = false;;
-            new_edge->start_pin = p->start_pin;
-            std::vector<Segment*> remove_list;
-            for(unsigned j = 0; j < p->segments.size(); j++){
-                auto &s = p->segments.at(j);
-                if(s->colinear(point)){
-                    // Split segment
-                    if(!(point == s->startPoint() || point == s->endPoint())){
-                        Segment *new_segment = nullptr;
-                        if(s->z == 0){
-                            new_segment = new Segment(s->z, start_point.x, s->y, point.x);
-                            if(s->neighbor == start_point.x) s->neighbor = point.x;
-                            else s->x = point.x;
-                        }
-                        else{
-                            new_segment = new Segment(s->z, s->x, start_point.y, point.y);
-                            if(s->neighbor == start_point.y) s->neighbor = point.y;
-                            else s->y = point.y;
-                        }
-                        new_edge->end_pin = point;
-                        p->start_pin = point;
-                        complete_edge = true;
-
-                        updateGridCurEdge(grid, split_candidate, new_edge, new_segment);
-                        grid->graph.at(point.x).at(point.y).at(point.z)->cur_edges.push_back(split_candidate);
-                        if(new_segment != nullptr) new_edge->segments.push_back(new_segment);
-                        
-                    }
-                    // Assign to old one
-                    else if(point == start_point){
-                        new_edge->end_pin = start_point;
-                        p->start_pin = new_edge->end_pin;
-                        complete_edge = true;
-                    }
-                    // Assign to new one
-                    else{
-                        updateGridCurEdge(grid, split_candidate, new_edge, s);
-                        remove_list.push_back(s);
-                        new_edge->segments.push_back(s);
-                        start_point = (s->startPoint() == start_point ? Coordinate3D(s->endPoint().x, s->endPoint().y, (s->endPoint().z + 1) % 2) 
-                                    : Coordinate3D(s->startPoint().x, s->startPoint().y, (s->startPoint().z + 1) % 2));
-                        
-                        new_edge->end_pin = start_point;
-                        p->start_pin = new_edge->end_pin;
-                        complete_edge = true;
-                    }
-                    break;
-                }
-                else{
-                    updateGridCurEdge(grid, split_candidate, new_edge, s);
-                    remove_list.push_back(s);
-                    new_edge->segments.push_back(s);
-                    start_point = (s->startPoint() == start_point ? Coordinate3D(s->endPoint().x, s->endPoint().y, (s->endPoint().z + 1) % 2) 
-                                : Coordinate3D(s->startPoint().x, s->startPoint().y, (s->startPoint().z + 1) % 2));
-                }
-            }
-            for (auto it = p->segments.begin(); it != p->segments.end(); ) {
-                if (std::find(remove_list.begin(), remove_list.end(), *it) != remove_list.end()) {
-                    // Remove the element
-                    it = p->segments.erase(it);
-                } else {
-                    // Move to the next element
-                    ++it;
-                }
-            }
-            if(complete_edge) {
-                updated_edges.push_back(new_edge);
-                return true;
-            }
-            else{
-                throw std::runtime_error("Error: split edge failed have unexpected error");
-            }
-        }
-    }
-    return false;
 }
 /* Insert the edge from the grid */
-void InsertEdgesFromGrid(Grid *grid, Edge *insert_candidate, int net_id){
+void InsertEdgesToGrid(Grid *grid, Edge *insert_candidate, int net_id){
+    bool find = false;
     // Remove an `Edge` including all the segments and the start_pin and end_pin location
     for(auto s : insert_candidate->segments){
         if(s->z == 0){
             for(int i = s->getX(); i <= s->getNeighbor(); i++){
                 auto &cur_edge = grid->graph.at(i).at(s->getY()).at(s->z)->cur_edges;
-                cur_edge.push_back(insert_candidate);
+                find = false;
+                for(auto e : cur_edge){
+                    if(e == insert_candidate) find = true;
+                    if(find) break;
+                }
+                if(!find) cur_edge.push_back(insert_candidate);
             }
         }
         else if(s->z == 1){
             for(int i = s->getY(); i <= s->getNeighbor(); i++){
                 auto &cur_edge = grid->graph.at(s->getX()).at(i).at(s->z)->cur_edges;
-                cur_edge.push_back(insert_candidate);
+                find = false;
+                for(auto e : cur_edge){
+                    if(e == insert_candidate) find = true;
+                    if(find) break;
+                }
+                if(!find) cur_edge.push_back(insert_candidate);
             }
         }
         grid->setObstacles(net_id, *s);
@@ -143,7 +74,7 @@ void InsertEdgesFromGrid(Grid *grid, Edge *insert_candidate, int net_id){
     // Remove start_pin
     auto sp = insert_candidate->start_pin;
     auto &t = grid->graph.at(sp.x).at(sp.y).at(sp.z)->cur_edges;
-    bool find = false;
+    find = false;
     for(auto e : t){
         if(e == insert_candidate) find = true;
         if(find) break;
@@ -190,6 +121,89 @@ void removeEdgesFromGrid(Grid *grid, Edge *remove_candidate){
     auto &k = grid->graph.at(ep.x).at(ep.y).at(ep.z)->cur_edges;
     k.erase(std::remove(k.begin(), k.end(), remove_candidate), k.end());
     if(k.size() == 0) grid->resetObstacles(ep);
+}
+bool splitEdges(Grid *grid, Coordinate3D point, Edge *split_candidate, std::vector<Edge*> &updated_edges){
+    for(unsigned i = 0; i < updated_edges.size(); i++){
+        auto &p = updated_edges.at(i);
+        if(p == split_candidate){
+            Coordinate3D start_point = p->start_pin;
+            Edge *new_edge = new Edge();
+            bool complete_edge = false;;
+            new_edge->start_pin = p->start_pin;
+            std::vector<Segment*> remove_list;
+            for(unsigned j = 0; j < p->segments.size(); j++){
+                auto &s = p->segments.at(j);
+                if(s->colinear(point)){
+                    // Split segment
+                    if(!(point == s->startPoint() || point == s->endPoint())){
+                        Segment *new_segment = nullptr;
+                        if(s->z == 0){
+                            new_segment = new Segment(s->z, start_point.x, s->y, point.x);
+                            if(s->neighbor == start_point.x) s->neighbor = point.x;
+                            else s->x = point.x;
+                        }
+                        else{
+                            new_segment = new Segment(s->z, s->x, start_point.y, point.y);
+                            if(s->neighbor == start_point.y) s->neighbor = point.y;
+                            else s->y = point.y;
+                        }
+                        new_edge->end_pin = point;
+                        p->start_pin = point;
+                        complete_edge = true;
+                        updateGridCurEdge(grid, split_candidate, new_edge, new_segment);
+                        grid->graph.at(point.x).at(point.y).at(point.z)->cur_edges.push_back(split_candidate);
+                        if(new_segment != nullptr) new_edge->segments.push_back(new_segment);
+                        
+                    }
+                    // Assign to old one
+                    else if(point == start_point){
+                        new_edge->end_pin = start_point;
+                        updateGridCurEdge(grid, nullptr, new_edge, new_edge->start_pin);
+                        updateGridCurEdge(grid, nullptr, new_edge, new_edge->end_pin);
+                        p->start_pin = new_edge->end_pin;
+                        complete_edge = true;
+                    }
+                    // Assign to new one
+                    else{
+                        updateGridCurEdge(grid, split_candidate, new_edge, s);
+                        remove_list.push_back(s);
+                        new_edge->segments.push_back(s);
+                        start_point = ((s->startPoint().x == start_point.x && s->startPoint().y == start_point.y) ? Coordinate3D(s->endPoint().x, s->endPoint().y, (s->endPoint().z + 1) % 2) 
+                                    : Coordinate3D(s->startPoint().x, s->startPoint().y, (s->startPoint().z + 1) % 2));
+                        
+                        new_edge->end_pin = start_point;
+                        p->start_pin = new_edge->end_pin;
+                        complete_edge = true;
+                    }
+                    break;
+                }
+                else{
+                    updateGridCurEdge(grid, split_candidate, new_edge, s);
+                    remove_list.push_back(s);
+                    new_edge->segments.push_back(s);
+                    start_point = ((s->startPoint().x == start_point.x && s->startPoint().y == start_point.y) ? Coordinate3D(s->endPoint().x, s->endPoint().y, (s->endPoint().z + 1) % 2) 
+                                : Coordinate3D(s->startPoint().x, s->startPoint().y, (s->startPoint().z + 1) % 2));
+                }
+            }
+            for (auto it = p->segments.begin(); it != p->segments.end(); ) {
+                if (std::find(remove_list.begin(), remove_list.end(), *it) != remove_list.end()) {
+                    // Remove the element
+                    it = p->segments.erase(it);
+                } else {
+                    // Move to the next element
+                    ++it;
+                }
+            }
+            if(complete_edge) {
+                updated_edges.push_back(new_edge);
+                return true;
+            }
+            else{
+                throw std::runtime_error("Error: split edge failed have unexpected error");
+            }
+        }
+    }
+    return false;
 }
 /*
  * Rip up the `rip_up_candidate` and updated the `updated_tree`
@@ -285,6 +299,7 @@ std::pair<int, int> ripUpEdges(Grid *grid, Edge *rip_up_candidate, Tree *updated
     // Check rip_up_candidate->end_pin
     edge_count = grid->graph.at(rip_up_candidate->end_pin.x).at(rip_up_candidate->end_pin.y).at(rip_up_candidate->end_pin.z)->cur_edges.size()
                 + grid->graph.at(rip_up_candidate->end_pin.x).at(rip_up_candidate->end_pin.y).at((rip_up_candidate->end_pin.z + 1) % 2)->cur_edges.size();
+    
     if(!updated_tree->pinset.count(rip_up_candidate->end_pin) && (edge_count == 2 || edge_count == 3)){
         std::vector<Edge*> merge_candidates;
         std::unordered_set<Edge*> remove_duplicate; remove_duplicate.insert(rip_up_candidate);
@@ -356,7 +371,7 @@ std::pair<int, int> ripUpEdges(Grid *grid, Edge *rip_up_candidate, Tree *updated
         removeEdgesFromGrid(grid, e);
     }
     for(auto e : new_edges){
-        InsertEdgesFromGrid(grid, e, net_id);
+        InsertEdgesToGrid(grid, e, net_id);
     }
     updated_tree->reconstructTree_phase2(new_edges);
 
