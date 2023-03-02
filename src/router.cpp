@@ -14,36 +14,8 @@ int mazeRouteCost(Router *R, Coordinate3D sp, Coordinate3D ep){
     cost += std::abs(sp.x - ep.x) * R->layout->horizontal_segment_cost + std::abs(sp.y - ep.y) * R->layout->vertical_segment_cost;
     return cost;
 }
-void updateGridCurEdge(Grid *grid, Edge *split_candidate, Edge *new_edge, Coordinate3D p){
-    // Find the iterator for the element to remove
-    auto &cur_edge = grid->graph.at(p.x).at(p.y).at(p.z)->cur_edges;
-    auto it = std::find(cur_edge.begin(), cur_edge.end(), split_candidate);
-    // If the element was found, remove it from the vector
-    if (it != cur_edge.end()) {
-        cur_edge.erase(it);
-    }
-    // Check new_edge is not already in cur_edges
-    bool find = false;
-    for(auto e : cur_edge){
-        if(e == new_edge) find = true;
-        if(find) break;
-    }
-    if(!find) cur_edge.push_back(new_edge);
-}
-void updateGridCurEdge(Grid *grid, Edge *split_candidate, Edge *new_edge, Segment *s){
-    if(s->z == 0){
-        for(int k = s->getX(); k <= s->getNeighbor(); k++){
-            updateGridCurEdge(grid, split_candidate, new_edge, Coordinate3D{k, s->getY(), s->z});
-        }
-    }
-    else if(s->z == 1){
-        for(int k = s->getY(); k <= s->getNeighbor(); k++){
-            updateGridCurEdge(grid, split_candidate, new_edge, Coordinate3D{s->getX(), k, s->z});
-        }
-    }
-}
 /* Insert the edge from the grid */
-void InsertEdgesToGrid(Grid *grid, Edge *insert_candidate, int net_id){
+void insertEdgesToGrid(Grid *grid, Edge *insert_candidate, int net_id){
     bool find = false;
     // Remove an `Edge` including all the segments and the start_pin and end_pin location
     for(auto s : insert_candidate->segments){
@@ -122,7 +94,37 @@ void removeEdgesFromGrid(Grid *grid, Edge *remove_candidate){
     k.erase(std::remove(k.begin(), k.end(), remove_candidate), k.end());
     if(k.size() == 0) grid->resetObstacles(ep);
 }
-bool splitEdges(Grid *grid, Coordinate3D point, Edge *split_candidate, std::vector<Edge*> &updated_edges){
+/* Remove the remove_candidate from the grid along the remove_edge_locus */
+void removeEdgesFromGrid(Grid *grid, Edge *remove_edge_locus, Edge *remove_candidate){
+    // Remove an `Edge` including all the segments and the start_pin and end_pin location
+    for(auto s : remove_edge_locus->segments){
+        if(s->z == 0){
+            for(int i = s->getX(); i <= s->getNeighbor(); i++){
+                auto &cur_edge = grid->graph.at(i).at(s->getY()).at(s->z)->cur_edges;
+                cur_edge.erase(std::remove(cur_edge.begin(), cur_edge.end(), remove_candidate), cur_edge.end());
+                if(cur_edge.size() == 0) grid->resetObstacles(Coordinate3D{i, s->getY(), s->z});
+            }
+        }
+        else if(s->z == 1){
+            for(int i = s->getY(); i <= s->getNeighbor(); i++){
+                auto &cur_edge = grid->graph.at(s->getX()).at(i).at(s->z)->cur_edges;
+                cur_edge.erase(std::remove(cur_edge.begin(), cur_edge.end(), remove_candidate), cur_edge.end());
+                if(cur_edge.size() == 0) grid->resetObstacles(Coordinate3D{s->getX(), i, s->z});
+            }
+        }
+    }
+    // Remove start_pin
+    auto sp = remove_edge_locus->start_pin;
+    auto &t = grid->graph.at(sp.x).at(sp.y).at(sp.z)->cur_edges;
+    t.erase(std::remove(t.begin(), t.end(), remove_candidate), t.end());
+    if(t.size() == 0) grid->resetObstacles(sp);
+    // Remove end_pin
+    auto ep = remove_edge_locus->end_pin;
+    auto &k = grid->graph.at(ep.x).at(ep.y).at(ep.z)->cur_edges;
+    k.erase(std::remove(k.begin(), k.end(), remove_candidate), k.end());
+    if(k.size() == 0) grid->resetObstacles(ep);
+}
+bool splitEdges(Grid *grid, Coordinate3D point, Edge *split_candidate, std::vector<Edge*> &updated_edges, int net_id){
     for(unsigned i = 0; i < updated_edges.size(); i++){
         auto &p = updated_edges.at(i);
         if(p == split_candidate){
@@ -149,23 +151,23 @@ bool splitEdges(Grid *grid, Coordinate3D point, Edge *split_candidate, std::vect
                         }
                         new_edge->end_pin = point;
                         p->start_pin = point;
-                        complete_edge = true;
-                        updateGridCurEdge(grid, split_candidate, new_edge, new_segment);
-                        grid->graph.at(point.x).at(point.y).at(point.z)->cur_edges.push_back(split_candidate);
                         if(new_segment != nullptr) new_edge->segments.push_back(new_segment);
-                        
+                        insertEdgesToGrid(grid, new_edge, net_id);
+                        removeEdgesFromGrid(grid, new_edge, p);
+                        insertEdgesToGrid(grid, p, net_id);
+                        complete_edge = true;
                     }
                     // Assign to old one
                     else if(point == start_point){
                         new_edge->end_pin = start_point;
-                        updateGridCurEdge(grid, nullptr, new_edge, new_edge->start_pin);
-                        updateGridCurEdge(grid, nullptr, new_edge, new_edge->end_pin);
                         p->start_pin = new_edge->end_pin;
+                        insertEdgesToGrid(grid, new_edge, net_id);
+                        removeEdgesFromGrid(grid, new_edge, p);
+                        insertEdgesToGrid(grid, p, net_id);
                         complete_edge = true;
                     }
                     // Assign to new one
                     else{
-                        updateGridCurEdge(grid, split_candidate, new_edge, s);
                         remove_list.push_back(s);
                         new_edge->segments.push_back(s);
                         start_point = ((s->startPoint().x == start_point.x && s->startPoint().y == start_point.y) ? Coordinate3D(s->endPoint().x, s->endPoint().y, (s->endPoint().z + 1) % 2) 
@@ -173,12 +175,14 @@ bool splitEdges(Grid *grid, Coordinate3D point, Edge *split_candidate, std::vect
                         
                         new_edge->end_pin = start_point;
                         p->start_pin = new_edge->end_pin;
+                        insertEdgesToGrid(grid, new_edge, net_id);
+                        removeEdgesFromGrid(grid, new_edge, p);
+                        insertEdgesToGrid(grid, p, net_id);
                         complete_edge = true;
                     }
                     break;
                 }
                 else{
-                    updateGridCurEdge(grid, split_candidate, new_edge, s);
                     remove_list.push_back(s);
                     new_edge->segments.push_back(s);
                     start_point = ((s->startPoint().x == start_point.x && s->startPoint().y == start_point.y) ? Coordinate3D(s->endPoint().x, s->endPoint().y, (s->endPoint().z + 1) % 2) 
@@ -264,8 +268,6 @@ std::pair<int, int> ripUpEdges(Grid *grid, Edge *rip_up_candidate, Tree *updated
             first_segment->x = std::min(first_segment->getX(), second_segment->getX());
             first_segment->y = std::min(first_segment->getY(), second_segment->getY());
             first_segment->neighbor = std::max(first_segment->getNeighbor(), second_segment->getNeighbor());
-            second_edge->segments.erase(std::remove(second_edge->segments.begin(), second_edge->segments.end(), second_segment), second_edge->segments.end());
-            delete second_segment;
         }
         first_edge->segments.insert(first_edge->segments.end(), second_edge->segments.begin(), second_edge->segments.end());
         // Remove second_edge
@@ -333,8 +335,6 @@ std::pair<int, int> ripUpEdges(Grid *grid, Edge *rip_up_candidate, Tree *updated
             first_segment->x = std::min(first_segment->getX(), second_segment->getX());
             first_segment->y = std::min(first_segment->getY(), second_segment->getY());
             first_segment->neighbor = std::max(first_segment->getNeighbor(), second_segment->getNeighbor());
-            second_edge->segments.erase(std::remove(second_edge->segments.begin(), second_edge->segments.end(), second_segment), second_edge->segments.end());
-            delete second_segment;
         }
         first_edge->segments.insert(first_edge->segments.end(), second_edge->segments.begin(), second_edge->segments.end());
         // Remove second_edge
@@ -371,7 +371,7 @@ std::pair<int, int> ripUpEdges(Grid *grid, Edge *rip_up_candidate, Tree *updated
         removeEdgesFromGrid(grid, e);
     }
     for(auto e : new_edges){
-        InsertEdgesToGrid(grid, e, net_id);
+        insertEdgesToGrid(grid, e, net_id);
     }
     updated_tree->reconstructTree_phase2(new_edges);
 
@@ -572,17 +572,17 @@ bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink){
                         if(splited.count(split_candidate_edge)) continue;
                         splited.insert(split_candidate_edge);
                         // Check source->edges contain the tmp_edge->start_pin
-                        if(!split) split = splitEdges(this->grid, tmp_edge->start_pin, split_candidate_edge, source->edges);
+                        if(!split) split = splitEdges(this->grid, tmp_edge->start_pin, split_candidate_edge, source->edges, net->id);
                         // Check sink->edges contain the tmp_edge->start_pin
-                        if(!split) split = splitEdges(this->grid, tmp_edge->start_pin, split_candidate_edge, sink->edges);
+                        if(!split) split = splitEdges(this->grid, tmp_edge->start_pin, split_candidate_edge, sink->edges, net->id);
                     }
                     for(auto &split_candidate_edge : this->grid->graph.at(tmp_edge->start_pin.x).at(tmp_edge->start_pin.y).at((tmp_edge->start_pin.z + 1) % 2)->cur_edges){
                         if(splited.count(split_candidate_edge)) continue;
                         splited.insert(split_candidate_edge);
                         // Check source->edges contain the tmp_edge->start_pin
-                        if(!split) split = splitEdges(this->grid, tmp_edge->start_pin, split_candidate_edge, source->edges);
+                        if(!split) split = splitEdges(this->grid, tmp_edge->start_pin, split_candidate_edge, source->edges, net->id);
                         // Check sink->edges contain the tmp_edge->start_pin
-                        if(!split) split = splitEdges(this->grid, tmp_edge->start_pin, split_candidate_edge, sink->edges);
+                        if(!split) split = splitEdges(this->grid, tmp_edge->start_pin, split_candidate_edge, sink->edges, net->id);
                     }
                 }
             }
@@ -598,16 +598,16 @@ bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink){
                     for(auto &split_candidate_edge :  this->grid->graph.at(tmp_edge->end_pin.x).at(tmp_edge->end_pin.y).at(tmp_edge->end_pin.z)->cur_edges){
                         if(splited.count(split_candidate_edge)) continue;
                         // Then check source->edges contain the tmp_edge->end_pin
-                        if(!split) split = splitEdges(this->grid, tmp_edge->end_pin, split_candidate_edge, source->edges);
+                        if(!split) split = splitEdges(this->grid, tmp_edge->end_pin, split_candidate_edge, source->edges, net->id);
                         // Then check sink->edges contain the tmp_edge->end_pin
-                        if(!split) split = splitEdges(this->grid, tmp_edge->end_pin, split_candidate_edge, sink->edges);
+                        if(!split) split = splitEdges(this->grid, tmp_edge->end_pin, split_candidate_edge, sink->edges, net->id);
                     }
                     for(auto &split_candidate_edge :  this->grid->graph.at(tmp_edge->end_pin.x).at(tmp_edge->end_pin.y).at((tmp_edge->end_pin.z + 1) % 2)->cur_edges){
                         if(splited.count(split_candidate_edge)) continue;
                         // Then check source->edges contain the tmp_edge->end_pin
-                        if(!split) split = splitEdges(this->grid, tmp_edge->end_pin, split_candidate_edge, source->edges);
+                        if(!split) split = splitEdges(this->grid, tmp_edge->end_pin, split_candidate_edge, source->edges, net->id);
                         // Then check sink->edges contain the tmp_edge->end_pin
-                        if(!split) split = splitEdges(this->grid, tmp_edge->end_pin, split_candidate_edge, sink->edges);
+                        if(!split) split = splitEdges(this->grid, tmp_edge->end_pin, split_candidate_edge, sink->edges, net->id);
                     }
                 }
             }

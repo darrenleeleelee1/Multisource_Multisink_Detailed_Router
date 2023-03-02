@@ -4,7 +4,7 @@
 #include "router.hpp"
 void Router::main(){
     this->twoPinNetDecomposition();
-
+    /*
     // sort Nets, try to add some heuristic
     // first pick the pins number, from the large to the small
     // then pick the bounding box, from the large to the small
@@ -36,6 +36,7 @@ void Router::main(){
     //     }
     //     else return a.pins.size() > b.pins.size();
     // });
+    */
     Grid *pin_and_obstacle_grid = new Grid(this->layout);
     for(auto &n : layout->netlist){
         n.initTrees();
@@ -98,7 +99,6 @@ void Router::main(){
             else if(!n.tree->mergeTree(tpn.first, tpn.second)) {
                 throw std::runtime_error("Error: merge tree error");
             }
-            /*
             for(auto rup : rip_up_pair){
                 const auto &[current_net, souce_index, sink_index] = rup;
                 // degbug
@@ -121,7 +121,6 @@ void Router::main(){
                     throw std::runtime_error("Error: merge tree error");
                 }
             }
-            */
         }
         // debug test path is correct set on the grid
         for(auto e : n.tree->getEdge()){
@@ -132,6 +131,7 @@ void Router::main(){
             if(!find) {
                 std::cout << "Error: Net#" + std::to_string(n.id) <<  " Edge#" << e->start_pin.toString() << " - " 
                     << e->end_pin.toString() << " Grid not contain " + Coordinate3D{e->start_pin.x, e->start_pin.y, e->start_pin.z}.toString() + "\n";
+                throw std::runtime_error("Read the error message");
             }
             find = false;
             for(auto t : grid->graph.at(e->end_pin.x).at(e->end_pin.y).at(e->end_pin.z)->cur_edges){
@@ -140,6 +140,7 @@ void Router::main(){
             if(!find) {
                 std::cout << "Error: Net#" + std::to_string(n.id) <<  " Edge#" << e->start_pin.toString() << " - " 
                     << e->end_pin.toString() << " Grid not contain " + Coordinate3D{e->end_pin.x, e->end_pin.y, e->end_pin.z}.toString() + "\n";
+                throw std::runtime_error("Read the error message");
             }
 
             for(auto s : e->segments){
@@ -148,7 +149,10 @@ void Router::main(){
                         for(auto t : grid->graph.at(i).at(s->getY()).at(s->z)->cur_edges){
                             if(t == e) find = true;
                         }
-                        if(!find) std::cout << ("Error: Net#" + std::to_string(n.id) + " Grid not set " + s->toString() + " well\n");
+                        if(!find){
+                            std::cout << ("Error: Net#" + std::to_string(n.id) + " Grid not set " + s->toString() + " well\n");
+                            throw std::runtime_error("Read the error message");
+                        }
                     }
                 }
                 else if(s->z == 1){
@@ -156,7 +160,10 @@ void Router::main(){
                         for(auto t : grid->graph.at(s->getX()).at(i).at(s->z)->cur_edges){
                             if(t == e) find = true;
                         }
-                        if(!find) std::cout << ("Error: Net#" + std::to_string(n.id) + " Grid not set " + s->toString() + " well\n");
+                        if(!find){
+                            std::cout << ("Error: Net#" + std::to_string(n.id) + " Grid not set " + s->toString() + " well\n");
+                            throw std::runtime_error("Read the error message");
+                        }
                     }
                 }
             }
