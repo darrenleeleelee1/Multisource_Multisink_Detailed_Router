@@ -7,9 +7,13 @@ import argparse
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dir', type=str, help='directory of the test files')
+parser.add_argument('-i', type=str, help='directory of the input test path')
+parser.add_argument('-o', type=str, help='directory of the output draw path')
 args = parser.parse_args()
-file_list = glob.glob(f"./{args.dir}/*.txt")
+
+in_path = args.i
+file_list = glob.glob(f"./{in_path}/*.txt")
+out_path = args.o
 
 for count, file in enumerate(file_list):
     file_name = file.split('/')[-1][:-4]
@@ -120,6 +124,6 @@ for count, file in enumerate(file_list):
         plt.xlim([0,width])
         plt.ylim([0,height])
         plt.title(f"{file_name} WL = {wl}")
-        plt.savefig(f"./{args.dir}/{file_name}.png", dpi=300)
+        plt.savefig(f"./{out_path}/{file_name}.png", dpi=300)
         plt.close(fig)
-        print(f"Success create ./{args.dir}/{file_name}.png")
+        print(f"Success create ./{out_path}/{file_name}.png")

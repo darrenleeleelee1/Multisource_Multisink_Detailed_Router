@@ -9,46 +9,54 @@ jobs:
     steps:
     - name: checkout code
       uses: actions/checkout@v3
-    
-    - name: mkdir artifacts
-      run : mkdir artifacts
 
     - name: show dependency
       run: |
           echo "gcc path: $(which gcc)"
           echo "gcc version: $(gcc --version)"
 
-    - name: create obj directory
-      run: mkdir ${{ github.workspace }}/obj 
+    - name: create dependency directory(obj, out)
+      run: |
+          mkdir ${{ github.workspace }}/obj 
+          mkdir ${{ github.workspace }}/out 
 
     - name: build Router
-      run:  make -j8
+      run:  ./sh/test.sh -b
 
     - name: run Router
-      run:  |
-        for i in {0..99}; do
-          echo "Running case test$i.txt"
-          ${{ github.workspace }}/router ${{ github.workspace }}/case/test$i.txt ${{ github.workspace }}/artifacts/test$i.txt
-        done
+      run:  ./sh/test.sh -r
 
     - name: verify output
       run:  |
         not_pass_files=""
-        for i in {0..99}; do
-          echo "Running case test$i.txt."
-          if (./verifier ./artifacts/test$i.txt | grep -q "Error"); then
-            echo "Error found in case test$i.txt."
-            echo "Please run the following code to check the log."
-            echo "./verifier ./artifacts/test$i.txt"
-            not_pass_files="$not_pass_files$i, "
-          fi
+        not_run_files=""
+        for testcase in $(ls -1 "$out_dir"/* | sort -V); do
+            testname=$(basename "$testcase")
+            testnum=$(echo "$testname" | sed 's/^test0*\([0-9]*\)\.txt$/\1/')
+            if [ ! -e "$out_dir/$testname" ]; then
+                not_run_files="$not_run_files$testnum, "
+            elif (./verifier "$out_dir/$testname" | grep -q "Error"); then
+                echo "Error found in ./$out_dir/$testname."
+                echo "Please run the following code to check the log."
+                echo "./verifier ./$out_dir/$testname"
+                not_pass_files="$not_pass_files$testnum, "
+            else
+                echo "$out_dir/$testname Passed."
+            fi
         done
+        if [ -n "$not_run_files" ]; then
+            echo "Not run at test{$not_run_files}"
+        fi
         if [ -n "$not_pass_files" ]; then
-          echo "Failed at test{$not_pass_files}.txt"
-          exit 1
+            echo "Failed at test{$not_pass_files}"
+            exit 1
+        else
+            echo "All pass!"
         fi
 
-    - name: rm -rf artifacts
-      run : rm -rf artifacts
+    - name: delete dependency directory(obj, out)
+      run: |
+          rm -rf ${{ github.workspace }}/obj 
+          rm -rf ${{ github.workspace }}/out
     
   
