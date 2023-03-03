@@ -33,7 +33,6 @@ jobs:
         fault_files=""
         leaks_files=""
         for testcase in $(ls -1 "$case_dir"/* | sort -V); do
-            echo "Test"
             testname=$(basename "$testcase")
             testnum=$(echo "$testname" | sed 's/^test0*\([0-9]*\)\.txt$/\1/')
             valgrind --leak-check=full --log-file="$log_path" ./router "$testcase" "$out_dir/$testname" >/dev/null 2>&1
