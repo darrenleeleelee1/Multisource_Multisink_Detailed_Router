@@ -29,9 +29,11 @@ jobs:
     - name: check memory leak
       run: |
         case_dir="./case"
+        log_path="tmp.log"
         fault_files=""
         leaks_files=""
         for testcase in $(ls -1 "$case_dir"/* | sort -V); do
+            echo "Test"
             testname=$(basename "$testcase")
             testnum=$(echo "$testname" | sed 's/^test0*\([0-9]*\)\.txt$/\1/')
             valgrind --leak-check=full --log-file="$log_path" ./router "$testcase" "$out_dir/$testname" >/dev/null 2>&1
@@ -51,6 +53,9 @@ jobs:
             echo "Memory leak at test{$leaks_files}.txt"
             exit 1
         fi
+
+    - name: clean Router
+      run: ./sh/test.sh -c
 
     - name: delete dependency directory(obj, out)
       run: |

@@ -44,6 +44,9 @@ jobs:
         name: routing_graph
         path: ./draw/*
 
+    - name: clean Router
+      run: ./sh/test.sh -c
+      
     - name: delete dependency directory(obj, out, draw)
       run: |
           rm -rf ./obj 

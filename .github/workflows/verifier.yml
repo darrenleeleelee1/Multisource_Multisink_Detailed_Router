@@ -55,6 +55,9 @@ jobs:
             echo "All pass!"
         fi
 
+    - name: clean Router
+      run: ./sh/test.sh -c
+      
     - name: delete dependency directory(obj, out)
       run: |
           rm -rf ./obj 
