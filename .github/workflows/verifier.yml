@@ -27,7 +27,8 @@ jobs:
       run:  ./sh/test.sh -r
 
     - name: verify output
-      run:  |
+      run: |
+        $out_dir="${{ github.workspace }}/out"
         not_pass_files=""
         not_run_files=""
         for testcase in $(ls -1 "$out_dir"/* | sort -V); do

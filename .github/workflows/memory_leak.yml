@@ -26,33 +26,33 @@ jobs:
     - name: build Router
       run: ./sh/test.sh -b
 
-		- name: check memory leak
-			run: |
-				fault_files=""
-				leaks_files=""
-				for testcase in $(ls -1 "$case_dir"/* | sort -V); do
-						testname=$(basename "$testcase")
-						testnum=$(echo "$testname" | sed 's/^test0*\([0-9]*\)\.txt$/\1/')
-						valgrind --leak-check=full --log-file="$log_path" ./router "$testcase" "$out_dir/$testname" >/dev/null 2>&1
-						if [ $? -ne 0 ]; then
-								fault_files="$fault_files$testnum, "
-						elif grep -q "ERROR SUMMARY: 0 errors" "$log_path"; then
-								echo "./$out_dir/$testname No memory leaks detected"
-						else
-								echo "./$out_dir/$testname Memory leaks detected!"
-								leaks_files="$leaks_files$i, "
-						fi
-				done
-				if [ -n "$fault_files" ]; then
-						echo "Fault at test{$fault_files}"
-				fi
-				if [ -n "$leaks_files" ]; then
-						echo "Memory leak at test{$leaks_files}.txt"
-						exit 1
-				fi
+    - name: check memory leak
+      run: |
+        case_dir="${{ github.workspace }}/case"
+        fault_files=""
+        leaks_files=""
+        for testcase in $(ls -1 "$case_dir"/* | sort -V); do
+            testname=$(basename "$testcase")
+            testnum=$(echo "$testname" | sed 's/^test0*\([0-9]*\)\.txt$/\1/')
+            valgrind --leak-check=full --log-file="$log_path" ./router "$testcase" "$out_dir/$testname" >/dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                fault_files="$fault_files$testnum, "
+            elif grep -q "ERROR SUMMARY: 0 errors" "$log_path"; then
+                echo "./$out_dir/$testname No memory leaks detected"
+            else
+                echo "./$out_dir/$testname Memory leaks detected!"
+                leaks_files="$leaks_files$i, "
+            fi
+        done
+        if [ -n "$fault_files" ]; then
+            echo "Fault at test{$fault_files}"
+        fi
+        if [ -n "$leaks_files" ]; then
+            echo "Memory leak at test{$leaks_files}.txt"
+            exit 1
+        fi
 
     - name: delete dependency directory(obj, out)
       run: |
           rm -rf ${{ github.workspace }}/obj 
           rm -rf ${{ github.workspace }}/out 
-  
