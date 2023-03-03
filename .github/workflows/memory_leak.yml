@@ -28,7 +28,7 @@ jobs:
 
     - name: check memory leak
       run: |
-        case_dir="${{ github.workspace }}/case"
+        case_dir="./case"
         fault_files=""
         leaks_files=""
         for testcase in $(ls -1 "$case_dir"/* | sort -V); do
@@ -54,5 +54,5 @@ jobs:
 
     - name: delete dependency directory(obj, out)
       run: |
-          rm -rf ${{ github.workspace }}/obj 
-          rm -rf ${{ github.workspace }}/out 
+          rm -rf ./obj 
+          rm -rf ./out 

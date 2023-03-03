@@ -17,8 +17,8 @@ jobs:
 
     - name: create dependency directory(obj, out)
       run: |
-          mkdir ${{ github.workspace }}/obj 
-          mkdir ${{ github.workspace }}/out 
+          mkdir ./obj 
+          mkdir ./out 
 
     - name: build Router
       run:  ./sh/test.sh -b
@@ -28,7 +28,7 @@ jobs:
 
     - name: verify output
       run: |
-        $out_dir="${{ github.workspace }}/out"
+        out_dir="./out"
         not_pass_files=""
         not_run_files=""
         for testcase in $(ls -1 "$out_dir"/* | sort -V); do
@@ -57,7 +57,7 @@ jobs:
 
     - name: delete dependency directory(obj, out)
       run: |
-          rm -rf ${{ github.workspace }}/obj 
-          rm -rf ${{ github.workspace }}/out
+          rm -rf ./obj 
+          rm -rf ./out
     
   
