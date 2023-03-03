@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include <tuple>
+#include <deque>
 #include "router.hpp"
 void Router::main(){
     this->twoPinNetDecomposition();
@@ -41,7 +42,7 @@ void Router::main(){
     for(auto &n : layout->netlist){
         n.initTrees();
         for(auto &tpn : n.two_pins_net){
-            std::vector<std::tuple<Net*, int, int>> rip_up_pair;
+            std::deque<std::tuple<Net*, int, int>> rip_up_pair;
             if(!tree2tree_maze_routing(&n, n.tree->at(tpn.first), n.tree->at(tpn.second))){
                 Path tmp_path = tree2tree_maze_routing(pin_and_obstacle_grid, &n, n.tree->at(tpn.first), n.tree->at(tpn.second));
 
@@ -54,15 +55,9 @@ void Router::main(){
                                 if(grid->graph.at(i).at(s->getY()).at(s->z)->cur_paths.size() > 0){
                                     rip_up_candidate = grid->graph.at(i).at(s->getY()).at(s->z)->cur_paths.at(0);
                                     if(rip_up_candidate != nullptr){
-                                        // degbug
-                                        for(auto s : rip_up_candidate->segments){
-                                            std::cout << s->toString() << "\n";
-                                        }
-                                        // degbug
-                                        std::cout << "\n";
                                         auto &current_net = layout->netlist.at(grid->graph.at(i).at(s->getY()).at(s->z)->obstacle);
                                         const auto &[souce_index, sink_index] = ripUpPaths(grid, rip_up_candidate, current_net.tree);
-                                        rip_up_pair.push_back(std::make_tuple(&current_net, souce_index, sink_index));
+                                        rip_up_pair.push_front(std::make_tuple(&current_net, souce_index, sink_index));
                                     }
                                     break;
                                 }
@@ -73,15 +68,9 @@ void Router::main(){
                                 if(grid->graph.at(s->getX()).at(i).at(s->z)->cur_paths.size() > 0){
                                     rip_up_candidate = grid->graph.at(s->getX()).at(i).at(s->z)->cur_paths.at(0);
                                     if(rip_up_candidate != nullptr){
-                                        // degbug
-                                        for(auto s : rip_up_candidate->segments){
-                                            std::cout << s->toString() << "\n";
-                                        }
-                                        std::cout << "\n";
-                                        // degbug
                                         auto &current_net = layout->netlist.at(grid->graph.at(s->getX()).at(i).at(s->z)->obstacle);
                                         const auto &[souce_index, sink_index] = ripUpPaths(grid, rip_up_candidate, current_net.tree);
-                                        rip_up_pair.push_back(std::make_tuple(&current_net, souce_index, sink_index));
+                                        rip_up_pair.push_front(std::make_tuple(&current_net, souce_index, sink_index));
                                     }
                                     break;
                                 }
@@ -93,27 +82,13 @@ void Router::main(){
                 }while(rip_up_candidate != nullptr);
 
 
-                // rip_up_pair.push_back(std::make_tuple(&n, tpn.first, tpn.second));
-                rip_up_pair.insert(rip_up_pair.begin(), std::make_tuple(&n, tpn.first, tpn.second));
+                rip_up_pair.push_front(std::make_tuple(&n, tpn.first, tpn.second));
             }
             else if(!n.tree->mergeTree(tpn.first, tpn.second)) {
                 throw std::runtime_error("Error: merge tree error");
             }
             for(auto rup : rip_up_pair){
                 const auto &[current_net, souce_index, sink_index] = rup;
-                // degbug
-                std::cout << "Net#" << current_net->id << "\n";
-                std::cout << "Source: ";
-                for(auto p : current_net->tree->at(souce_index)->pinlist){
-                    std::cout << p.toString() << ", ";
-                }
-                std::cout << "\n";
-                std::cout << "Sink: ";
-                for(auto p : current_net->tree->at(sink_index)->pinlist){
-                    std::cout << p.toString() << ", ";
-                }
-                std::cout << "\n";
-                // degbug
                 if(!tree2tree_maze_routing(current_net, current_net->tree->at(souce_index), current_net->tree->at(sink_index))){
                     throw std::runtime_error("Error: need more rip-up");
                 }
@@ -122,7 +97,7 @@ void Router::main(){
                 }
             }
         }
-        // debug test path is correct set on the grid
+        /* TESTING path is correct set on the grid */
         for(auto e : n.tree->getPath()){
             bool find = false;
             for(auto t : grid->graph.at(e->start_pin.x).at(e->start_pin.y).at(e->start_pin.z)->cur_paths){
@@ -168,6 +143,7 @@ void Router::main(){
                 }
             }
         }
-        // debug test path is correct set on the grid
     }
+    
+    delete pin_and_obstacle_grid;
 }

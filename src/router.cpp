@@ -152,32 +152,22 @@ bool splitPaths(Grid *grid, Coordinate3D point, Path *split_candidate, std::vect
                         new_path->end_pin = point;
                         p->start_pin = point;
                         if(new_segment != nullptr) new_path->segments.push_back(new_segment);
-                        insertPathsToGrid(grid, new_path, net_id);
-                        removePathsFromGrid(grid, new_path, p);
-                        insertPathsToGrid(grid, p, net_id);
                         complete_path = true;
                     }
-                    // Assign to old one
+                    // Current segment belongs to old one
                     else if(point == start_point){
                         new_path->end_pin = start_point;
                         p->start_pin = new_path->end_pin;
-                        insertPathsToGrid(grid, new_path, net_id);
-                        removePathsFromGrid(grid, new_path, p);
-                        insertPathsToGrid(grid, p, net_id);
                         complete_path = true;
                     }
-                    // Assign to new one
+                    // Current segment belongs to  new one, assign to new path
                     else{
                         remove_list.push_back(s);
                         new_path->segments.push_back(s);
                         start_point = ((s->startPoint().x == start_point.x && s->startPoint().y == start_point.y) ? Coordinate3D(s->endPoint().x, s->endPoint().y, (s->endPoint().z + 1) % 2) 
                                     : Coordinate3D(s->startPoint().x, s->startPoint().y, (s->startPoint().z + 1) % 2));
-                        
                         new_path->end_pin = start_point;
                         p->start_pin = new_path->end_pin;
-                        insertPathsToGrid(grid, new_path, net_id);
-                        removePathsFromGrid(grid, new_path, p);
-                        insertPathsToGrid(grid, p, net_id);
                         complete_path = true;
                     }
                     break;
@@ -199,6 +189,9 @@ bool splitPaths(Grid *grid, Coordinate3D point, Path *split_candidate, std::vect
                 }
             }
             if(complete_path) {
+                insertPathsToGrid(grid, new_path, net_id);
+                removePathsFromGrid(grid, new_path, p);
+                insertPathsToGrid(grid, p, net_id);
                 updated_paths.push_back(new_path);
                 return true;
             }
@@ -249,7 +242,7 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
             merge_candidates.push_back(p);
         }
         if(merge_candidates.size() != 2){
-            throw std::runtime_error("Error: merge path number exceed 2");
+            throw std::runtime_error("Error: merge path number != 2");
         }
         auto &first_path = merge_candidates.at(0);
         auto &second_path = merge_candidates.at(1);
@@ -264,16 +257,20 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
                 second_segment = sp;
             }
         }
-        if(first_segment->z == second_segment->z){
+
+        removePathsFromGrid(grid, first_path);
+        removePathsFromGrid(grid, second_path);
+
+        if(first_segment != nullptr && second_segment != nullptr && (first_segment->z == second_segment->z)){
             first_segment->x = std::min(first_segment->getX(), second_segment->getX());
             first_segment->y = std::min(first_segment->getY(), second_segment->getY());
             first_segment->neighbor = std::max(first_segment->getNeighbor(), second_segment->getNeighbor());
             second_path->segments.erase(std::remove(second_path->segments.begin(), second_path->segments.end(), second_segment), second_path->segments.end());
             delete second_segment;
         }
-        first_path->segments.insert(first_path->segments.end(), second_path->segments.begin(), second_path->segments.end());
-        // Remove second_path
-        removePathsFromGrid(grid, second_path);
+        for(auto s : second_path->segments){
+            first_path->segments.push_back(new Segment(*s));
+        }
         
         // Find the conjunction point and merge them to first_path
         if(first_path->start_pin == second_path->start_pin){
@@ -288,6 +285,7 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
         else if(first_path->end_pin == second_path->end_pin){
             first_path->end_pin = second_path->start_pin;
         }
+
         roots.clear();
         for(unsigned i = 0; i < updated_tree->coordinate2index.size(); i++){
 			int root = updated_tree->find(i);
@@ -297,7 +295,6 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
 				cur_path.erase(std::remove(cur_path.begin(), cur_path.end(), second_path), cur_path.end());
 			}
 		}
-
         if(second_path != nullptr) delete second_path;
     }
     // Check rip_up_candidate->end_pin
@@ -333,6 +330,10 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
                 second_segment = sp;
             }
         }
+
+        removePathsFromGrid(grid, first_path);
+        removePathsFromGrid(grid, second_path);
+
         if(first_segment->z == second_segment->z){
             first_segment->x = std::min(first_segment->getX(), second_segment->getX());
             first_segment->y = std::min(first_segment->getY(), second_segment->getY());
@@ -340,9 +341,9 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
             second_path->segments.erase(std::remove(second_path->segments.begin(), second_path->segments.end(), second_segment), second_path->segments.end());
             delete second_segment;
         }
-        first_path->segments.insert(first_path->segments.end(), second_path->segments.begin(), second_path->segments.end());
-        // Remove second_path
-        removePathsFromGrid(grid, second_path);
+        for(auto s : second_path->segments){
+            first_path->segments.push_back(new Segment(*s));
+        }
 
         // Find the conjunction point and merge them to first_path
         if(first_path->start_pin == second_path->start_pin){
@@ -357,6 +358,7 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
         else if(first_path->end_pin == second_path->end_pin){
             first_path->end_pin = second_path->start_pin;
         }
+
         roots.clear();
         for(unsigned i = 0; i < updated_tree->coordinate2index.size(); i++){
 			int root = updated_tree->find(i);
@@ -366,6 +368,7 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
 				cur_path.erase(std::remove(cur_path.begin(), cur_path.end(), second_path), cur_path.end());
 			}
 		}
+
         if(second_path != nullptr) delete second_path;
     }
 
@@ -579,6 +582,7 @@ bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink){
                         if(!split) split = splitPaths(this->grid, tmp_path->start_pin, split_candidate_path, source->paths, net->id);
                         // Check sink->paths contain the tmp_path->start_pin
                         if(!split) split = splitPaths(this->grid, tmp_path->start_pin, split_candidate_path, sink->paths, net->id);
+                        if(split) break;
                     }
                     for(auto &split_candidate_path : this->grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at((tmp_path->start_pin.z + 1) % 2)->cur_paths){
                         if(splited.count(split_candidate_path)) continue;
@@ -587,6 +591,7 @@ bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink){
                         if(!split) split = splitPaths(this->grid, tmp_path->start_pin, split_candidate_path, source->paths, net->id);
                         // Check sink->paths contain the tmp_path->start_pin
                         if(!split) split = splitPaths(this->grid, tmp_path->start_pin, split_candidate_path, sink->paths, net->id);
+                        if(split) break;
                     }
                 }
             }
@@ -605,6 +610,7 @@ bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink){
                         if(!split) split = splitPaths(this->grid, tmp_path->end_pin, split_candidate_path, source->paths, net->id);
                         // Then check sink->paths contain the tmp_path->end_pin
                         if(!split) split = splitPaths(this->grid, tmp_path->end_pin, split_candidate_path, sink->paths, net->id);
+                        if(split) break;
                     }
                     for(auto &split_candidate_path :  this->grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at((tmp_path->end_pin.z + 1) % 2)->cur_paths){
                         if(splited.count(split_candidate_path)) continue;
@@ -612,6 +618,7 @@ bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink){
                         if(!split) split = splitPaths(this->grid, tmp_path->end_pin, split_candidate_path, source->paths, net->id);
                         // Then check sink->paths contain the tmp_path->end_pin
                         if(!split) split = splitPaths(this->grid, tmp_path->end_pin, split_candidate_path, sink->paths, net->id);
+                        if(split) break;
                     }
                 }
             }
