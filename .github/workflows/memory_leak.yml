@@ -1,6 +1,9 @@
 name: memory_leak
 
-on: [push]
+on:
+  push:
+    branches:
+      - 'master'
 
 jobs:
   check_memory_leak:

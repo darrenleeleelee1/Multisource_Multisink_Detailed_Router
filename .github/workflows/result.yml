@@ -1,6 +1,9 @@
 name: result
 
-on: [push]
+on:
+  push:
+    branches:
+      - 'draw'
 
 jobs:
   build_and_run_and_save:
