@@ -124,6 +124,7 @@ void removePathsFromGrid(Grid *grid, Path *remove_path_locus, Path *remove_candi
     k.erase(std::remove(k.begin(), k.end(), remove_candidate), k.end());
     if(k.size() == 0) grid->resetObstacles(ep);
 }
+/* When creating a stiener node on a path, the path need to be split*/
 bool splitPaths(Grid *grid, Coordinate3D point, Path *split_candidate, std::vector<Path*> &updated_paths, int net_id){
     for(unsigned i = 0; i < updated_paths.size(); i++){
         auto &p = updated_paths.at(i);
@@ -228,7 +229,8 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
     // Check rip_up_candidate->start_pin
     unsigned path_count = grid->graph.at(rip_up_candidate->start_pin.x).at(rip_up_candidate->start_pin.y).at(rip_up_candidate->start_pin.z)->cur_paths.size()
                 + grid->graph.at(rip_up_candidate->start_pin.x).at(rip_up_candidate->start_pin.y).at((rip_up_candidate->start_pin.z + 1) % 2)->cur_paths.size();
-    if(!updated_tree->pinset.count(rip_up_candidate->start_pin) && (path_count == 2 || path_count == 3)){
+    if(!updated_tree->pinset.count(Coordinate3D{rip_up_candidate->start_pin.x, rip_up_candidate->start_pin.y, (rip_up_candidate->start_pin.z + 1) % 2}) 
+        && !updated_tree->pinset.count(rip_up_candidate->start_pin) && (path_count == 2 || path_count == 3)){
         std::vector<Path*> merge_candidates;
         std::unordered_set<Path*> remove_duplicate; remove_duplicate.insert(rip_up_candidate);
         for(auto p : grid->graph.at(rip_up_candidate->start_pin.x).at(rip_up_candidate->start_pin.y).at(rip_up_candidate->start_pin.z)->cur_paths){
@@ -301,7 +303,8 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
     path_count = grid->graph.at(rip_up_candidate->end_pin.x).at(rip_up_candidate->end_pin.y).at(rip_up_candidate->end_pin.z)->cur_paths.size()
                 + grid->graph.at(rip_up_candidate->end_pin.x).at(rip_up_candidate->end_pin.y).at((rip_up_candidate->end_pin.z + 1) % 2)->cur_paths.size();
     
-    if(!updated_tree->pinset.count(rip_up_candidate->end_pin) && (path_count == 2 || path_count == 3)){
+    if(!updated_tree->pinset.count(Coordinate3D{rip_up_candidate->end_pin.x, rip_up_candidate->end_pin.y, (rip_up_candidate->end_pin.z + 1) % 2}) 
+        && updated_tree->pinset.count(rip_up_candidate->end_pin) && (path_count == 2 || path_count == 3)){
         std::vector<Path*> merge_candidates;
         std::unordered_set<Path*> remove_duplicate; remove_duplicate.insert(rip_up_candidate);
         for(auto p : grid->graph.at(rip_up_candidate->end_pin.x).at(rip_up_candidate->end_pin.y).at(rip_up_candidate->end_pin.z)->cur_paths){

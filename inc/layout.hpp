@@ -290,7 +290,8 @@ public:
 			}
 		}
 		for(auto e : new_paths){
-			subtrees.at(coordinate2index[e->start_pin])->paths.push_back(e);
+			int root = find(coordinate2index[e->start_pin]);
+			subtrees.at(root)->paths.push_back(e);
 			if(!mergeTree(coordinate2index[e->start_pin], coordinate2index[e->end_pin])){
 				throw std::runtime_error("Failure: not sure what this behavior");
 			}
