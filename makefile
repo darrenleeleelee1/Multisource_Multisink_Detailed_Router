@@ -49,4 +49,4 @@ $(OBJ_DIR)/main.o: main.cpp
 clean:
 	rm -f $(OBJ_DIR)/*.o $(EXE)
 clean_out:
-	rm out/*
+	rm out/* draw/*

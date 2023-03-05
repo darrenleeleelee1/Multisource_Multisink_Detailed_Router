@@ -2,4 +2,5 @@
 obj/
 out/
 draw/
+pass_small_case/
 router
