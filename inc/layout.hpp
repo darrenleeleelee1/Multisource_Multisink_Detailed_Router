@@ -38,6 +38,7 @@ class Coordinate2D{
 public:
 	int x, y;
 	Coordinate2D(){}
+	Coordinate2D(Coordinate3D coor) : x(coor.x), y(coor.y) {} 
 	Coordinate2D(int _x, int  _y) : x(_x), y(_y) {}
 	~Coordinate2D(){}
 	std::string toString(){
@@ -266,6 +267,7 @@ public:
 		}
 		// Reinitilize parents, size, subtree, coordinate2index
 		unsigned n = pinset.size();
+		coordinate2index.clear();
 		parents.assign(n, -1);
         size.assign(n, 1);
 		subtrees.resize(n);

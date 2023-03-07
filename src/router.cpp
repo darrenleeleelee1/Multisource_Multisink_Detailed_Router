@@ -227,11 +227,11 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
     }
     /* Merge Paths */
     // Check rip_up_candidate->start_pin
-    // unsigned path_count = grid->graph.at(rip_up_candidate->start_pin.x).at(rip_up_candidate->start_pin.y).at(rip_up_candidate->start_pin.z)->cur_paths.size()
-    //             + grid->graph.at(rip_up_candidate->start_pin.x).at(rip_up_candidate->start_pin.y).at((rip_up_candidate->start_pin.z + 1) % 2)->cur_paths.size();
     std::unordered_set<Path*> path_count;
     path_count.insert(grid->graph.at(rip_up_candidate->start_pin.x).at(rip_up_candidate->start_pin.y).at(rip_up_candidate->start_pin.z)->cur_paths.begin()
                 , grid->graph.at(rip_up_candidate->start_pin.x).at(rip_up_candidate->start_pin.y).at(rip_up_candidate->start_pin.z)->cur_paths.end());
+    path_count.insert(grid->graph.at(rip_up_candidate->start_pin.x).at(rip_up_candidate->start_pin.y).at((rip_up_candidate->start_pin.z + 1) % 2)->cur_paths.begin()
+                , grid->graph.at(rip_up_candidate->start_pin.x).at(rip_up_candidate->start_pin.y).at((rip_up_candidate->start_pin.z + 1) % 2)->cur_paths.end());
     if(!updated_tree->pinset.count(Coordinate3D{rip_up_candidate->start_pin.x, rip_up_candidate->start_pin.y, (rip_up_candidate->start_pin.z + 1) % 2}) 
         && !updated_tree->pinset.count(rip_up_candidate->start_pin) && (path_count.size() == 2)){
         std::vector<Path*> merge_candidates;
@@ -303,13 +303,12 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
         if(second_path != nullptr) delete second_path;
     }
     // Check rip_up_candidate->end_pin
-    // path_count = grid->graph.at(rip_up_candidate->end_pin.x).at(rip_up_candidate->end_pin.y).at(rip_up_candidate->end_pin.z)->cur_paths.size()
-    //             + grid->graph.at(rip_up_candidate->end_pin.x).at(rip_up_candidate->end_pin.y).at((rip_up_candidate->end_pin.z + 1) % 2)->cur_paths.size();
-    
     path_count.clear();
     path_count.insert(grid->graph.at(rip_up_candidate->end_pin.x).at(rip_up_candidate->end_pin.y).at(rip_up_candidate->end_pin.z)->cur_paths.begin()
                 , grid->graph.at(rip_up_candidate->end_pin.x).at(rip_up_candidate->end_pin.y).at(rip_up_candidate->end_pin.z)->cur_paths.end());
-
+    path_count.insert(grid->graph.at(rip_up_candidate->end_pin.x).at(rip_up_candidate->end_pin.y).at((rip_up_candidate->end_pin.z + 1) % 2)->cur_paths.begin()
+                , grid->graph.at(rip_up_candidate->end_pin.x).at(rip_up_candidate->end_pin.y).at((rip_up_candidate->end_pin.z + 1) % 2)->cur_paths.end());
+    
     if(!updated_tree->pinset.count(Coordinate3D{rip_up_candidate->end_pin.x, rip_up_candidate->end_pin.y, (rip_up_candidate->end_pin.z + 1) % 2}) 
         && !updated_tree->pinset.count(rip_up_candidate->end_pin) && (path_count.size() == 2)){
         std::vector<Path*> merge_candidates;
@@ -344,7 +343,7 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
         removePathsFromGrid(grid, first_path);
         removePathsFromGrid(grid, second_path);
 
-        if(first_segment->z == second_segment->z){
+        if(first_segment != nullptr && second_segment != nullptr && (first_segment->z == second_segment->z)){
             first_segment->x = std::min(first_segment->getX(), second_segment->getX());
             first_segment->y = std::min(first_segment->getY(), second_segment->getY());
             first_segment->neighbor = std::max(first_segment->getNeighbor(), second_segment->getNeighbor());
@@ -356,17 +355,20 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
         }
 
         // Find the conjunction point and merge them to first_path
-        if(first_path->start_pin == second_path->start_pin){
+        if(Coordinate2D{first_path->start_pin} == Coordinate2D{second_path->start_pin}){
             first_path->start_pin = second_path->end_pin;
         }
-        else if(first_path->start_pin == second_path->end_pin){
+        else if(Coordinate2D{first_path->start_pin} == Coordinate2D{second_path->end_pin}){
             first_path->start_pin = second_path->start_pin;
         }
-        else if(first_path->end_pin == second_path->start_pin){
+        else if(Coordinate2D{first_path->end_pin} == Coordinate2D{second_path->start_pin}){
             first_path->end_pin = second_path->end_pin;
         }
-        else if(first_path->end_pin == second_path->end_pin){
+        else if(Coordinate2D{first_path->end_pin} == Coordinate2D{second_path->end_pin}){
             first_path->end_pin = second_path->start_pin;
+        }
+        else{
+            throw std::runtime_error("Fail merge first_path and second_path");
         }
 
         roots.clear();
@@ -578,11 +580,12 @@ bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink){
 
         tmp_path->end_pin = current->coordinate;
         /* Split Path */
-        // unsigned path_count = this->grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths.size()
-        //                 + this->grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at((tmp_path->start_pin.z + 1) % 2)->cur_paths.size();
         std::unordered_set<Path*> path_count;
         path_count.insert(grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths.begin()
                 , grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths.end());
+        path_count.insert(grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at((tmp_path->start_pin.z + 1) % 2)->cur_paths.begin()
+                , grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at((tmp_path->start_pin.z + 1) % 2)->cur_paths.end());
+
         if(path_count.size() == 2){
             if(!source->pinlist.count(tmp_path->start_pin) && !source->pinlist.count(Coordinate3D{tmp_path->start_pin.x, tmp_path->start_pin.y, (tmp_path->start_pin.z + 1) % 2})){
                 if(!sink->pinlist.count(tmp_path->start_pin) && !sink->pinlist.count(Coordinate3D{tmp_path->start_pin.x, tmp_path->start_pin.y, (tmp_path->start_pin.z + 1) % 2})){
@@ -610,11 +613,11 @@ bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink){
             }
             
         }
-        // path_count = this->grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths.size()
-        //         + this->grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at((tmp_path->end_pin.z + 1) % 2)->cur_paths.size();
         path_count.clear();
         path_count.insert(grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths.begin()
                 , grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths.end());
+        path_count.insert(grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at((tmp_path->end_pin.z + 1) % 2)->cur_paths.begin()
+                , grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at((tmp_path->end_pin.z + 1) % 2)->cur_paths.end());
         if(path_count.size() == 2){
             if(!source->pinlist.count(tmp_path->end_pin) && !source->pinlist.count(Coordinate3D{tmp_path->end_pin.x, tmp_path->end_pin.y, (tmp_path->end_pin.z + 1) % 2})){
                 if(!sink->pinlist.count(tmp_path->end_pin) && !sink->pinlist.count(Coordinate3D{tmp_path->end_pin.x, tmp_path->end_pin.y, (tmp_path->end_pin.z + 1) % 2})){
