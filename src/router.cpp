@@ -405,7 +405,28 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
         grid->setObstacles(net_id, p);
     }
     updated_tree->reconstructTree_phase2(new_paths);
-
+    /* 
+     * If rip up path induce the via (which is at the pin location) loss
+     * Then need to refine the path extreme point
+     */
+    for(auto p : updated_tree->pinset){
+        auto &pin_layer = grid->graph.at(p.x).at(p.y).at(p.z)->cur_paths;
+        auto &other_layer = grid->graph.at(p.x).at(p.y).at((p.z + 1) % 2)->cur_paths;
+        if(pin_layer.size() == 0 && other_layer.size() == 1){
+            auto refine_candidate = other_layer.at(0);
+            if(Coordinate2D{refine_candidate->start_pin} == Coordinate2D{p} || Coordinate2D{refine_candidate->end_pin} == Coordinate2D{p}){
+                if(Coordinate2D{refine_candidate->start_pin} == Coordinate2D{p}){
+                    refine_candidate->start_pin.z = (refine_candidate->start_pin.z + 1) % 2;
+                }
+                else{
+                    refine_candidate->end_pin.z = (refine_candidate->end_pin.z + 1) % 2;
+                }
+                pin_layer.push_back(refine_candidate);
+                other_layer.pop_back();
+                throw std::runtime_error("TEST");
+            }
+        }
+    }
     // Find the rip_up_candidate->start_pin at which tree
     int reroute_first_subtree = -1;
     roots.clear();
