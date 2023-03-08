@@ -57,7 +57,7 @@ if [ "$help" == true ]; then
     exit 0
 fi
 # declaring variables
-case_dir="./case"
+case_dir="./pass_small_case"
 out_dir="./out"
 draw_dir="./draw"
 log_path="tmp.log"
@@ -75,7 +75,7 @@ if [ "$run" == true ] && [ "$check_memory" == false ]; then
     reroute_files=""
     for testcase in $(ls -1 "$case_dir"/* | sort -V); do
         testname=$(basename "$testcase")
-        testnum=$(echo "$testname" | sed 's/^test0*\([0-9]*\)\.txt$/\1/')
+        testnum=$(echo "$testname" | sed 's/^test\([0-9]\+\)\.txt$/\1/')
         echo "Running case $testname"
         ./router "$testcase" "$out_dir/$testname" >"$log_path" 
         if [ $? -ne 0 ]; then
@@ -99,7 +99,7 @@ if [ "$check_memory" == true ]; then
     leaks_files=""
     for testcase in $(ls -1 "$case_dir"/* | sort -V); do
         testname=$(basename "$testcase")
-        testnum=$(echo "$testname" | sed 's/^test0*\([0-9]*\)\.txt$/\1/')
+        testnum=$(echo "$testname" | sed 's/^test\([0-9]\+\)\.txt$/\1/')
         valgrind --leak-check=full --log-file="$log_path" ./router "$testcase" "$out_dir/$testname" >/dev/null 2>&1
         if [ $? -ne 0 ]; then
             fault_files="$fault_files$testnum, "
@@ -120,7 +120,7 @@ if [ "$verify" == true ]; then
     not_run_files=""
     for testcase in $(ls -1 "$out_dir"/* | sort -V); do
         testname=$(basename "$testcase")
-        testnum=$(echo "$testname" | sed 's/^test0*\([0-9]*\)\.txt$/\1/')
+        testnum=$(echo "$testname" | sed 's/^test\([0-9]\+\)\.txt$/\1/')
         if [ ! -e "$out_dir/$testname" ]; then
             not_run_files="$not_run_files$testnum, "
         elif (./verifier "$out_dir/$testname" | grep -q "Error"); then

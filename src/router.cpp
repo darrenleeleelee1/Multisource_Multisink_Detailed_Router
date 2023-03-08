@@ -253,12 +253,16 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
         auto &second_path = merge_candidates.at(1);
         Segment *first_segment = nullptr, *second_segment = nullptr;
         for(auto fp : first_path->segments){
-            if(fp->startPoint() == rip_up_candidate->start_pin || fp->endPoint() == rip_up_candidate->start_pin){
+            // Find the conjunction point of two segments
+            if(Coordinate2D{fp->startPoint()} == Coordinate2D{rip_up_candidate->start_pin} 
+                || Coordinate2D{fp->endPoint()} == Coordinate2D{rip_up_candidate->start_pin}){
                 first_segment = fp;
             }
         }
         for(auto sp : second_path->segments){
-            if(sp->startPoint() == rip_up_candidate->start_pin || sp->endPoint() == rip_up_candidate->start_pin){
+            // Find the conjunction point of two segments
+            if(Coordinate2D{sp->startPoint()} == Coordinate2D{rip_up_candidate->start_pin} 
+                || Coordinate2D{sp->endPoint()} == Coordinate2D{rip_up_candidate->start_pin}){
                 second_segment = sp;
             }
         }
@@ -278,16 +282,16 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
         }
         
         // Find the conjunction point and merge them to first_path
-        if(first_path->start_pin == second_path->start_pin){
+        if(Coordinate2D{first_path->start_pin} == Coordinate2D{second_path->start_pin}){
             first_path->start_pin = second_path->end_pin;
         }
-        else if(first_path->start_pin == second_path->end_pin){
+        else if(Coordinate2D{first_path->start_pin} == Coordinate2D{second_path->end_pin}){
             first_path->start_pin = second_path->start_pin;
         }
-        else if(first_path->end_pin == second_path->start_pin){
+        else if(Coordinate2D{first_path->end_pin} == Coordinate2D{second_path->start_pin}){
             first_path->end_pin = second_path->end_pin;
         }
-        else if(first_path->end_pin == second_path->end_pin){
+        else if(Coordinate2D{first_path->end_pin} == Coordinate2D{second_path->end_pin}){
             first_path->end_pin = second_path->start_pin;
         }
 
@@ -330,12 +334,16 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
         auto &second_path = merge_candidates.at(1);
         Segment *first_segment = nullptr, *second_segment = nullptr;
         for(auto fp : first_path->segments){
-            if(fp->startPoint() == rip_up_candidate->end_pin || fp->endPoint() == rip_up_candidate->end_pin){
+            // Find the conjunction point of two segments
+            if(Coordinate2D{fp->startPoint()} == Coordinate2D{rip_up_candidate->end_pin} 
+                || Coordinate2D{fp->endPoint()} == Coordinate2D{rip_up_candidate->end_pin}){
                 first_segment = fp;
             }
         }
         for(auto sp : second_path->segments){
-            if(sp->startPoint() == rip_up_candidate->end_pin || sp->endPoint() == rip_up_candidate->end_pin){
+            // Find the conjunction point of two segments
+            if(Coordinate2D{sp->startPoint()} == Coordinate2D{rip_up_candidate->end_pin} 
+                || Coordinate2D{sp->endPoint()} == Coordinate2D{rip_up_candidate->end_pin}){
                 second_segment = sp;
             }
         }

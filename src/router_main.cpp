@@ -51,17 +51,11 @@ void Router::routing(Net &n, int source_index, int sink_index){
     }
     for(auto rup : rip_up_pair){
         const auto &[current_net, souce_index, sink_index] = rup;
-        if(!tree2treeMazeRouting(current_net, current_net->tree->at(souce_index), current_net->tree->at(sink_index))){
-            throw std::runtime_error("Error: need more rip-up");
-        }
-        else if (!current_net->tree->mergeTree(souce_index, sink_index)) {
-            throw std::runtime_error("Error: merge tree error");
-        }
+        this->routing(*current_net, souce_index, sink_index);
     }
 }
 void Router::main(){
     this->twoPinNetDecomposition();
-
     
     for(auto &n : layout->netlist){
         n.initTrees();

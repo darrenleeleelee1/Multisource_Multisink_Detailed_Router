@@ -129,7 +129,6 @@ public:
 		}
 	}
 	bool colinear(Coordinate3D point){
-		if(point.z != this->z) return false;
 		if(this->z == 0){
 			if(this->getY() != point.y) return false;
 			if(this->getX() <= point.x && point.x <= this->getNeighbor()) return true;
