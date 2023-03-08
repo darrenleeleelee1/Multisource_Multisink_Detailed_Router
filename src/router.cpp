@@ -392,6 +392,10 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
     for(auto e : new_paths){
         insertPathsToGrid(grid, e, net_id);
     }
+    // Some pins may be clear out, need to insert back
+    for(auto p : updated_tree->pinset){
+        grid->setObstacles(net_id, p);
+    }
     updated_tree->reconstructTree_phase2(new_paths);
 
     // Find the rip_up_candidate->start_pin at which tree
@@ -456,7 +460,7 @@ void Router::twoPinNetDecomposition(){
             , this->layout->horizontal_segment_cost, this->layout->vertical_segment_cost);
     }
 }
-bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink){
+bool Router::tree2treeMazeRouting(Net *net, Subtree *source, Subtree *sink){
     /* Declaring */
     bool success = true;
     Vertex *current;
@@ -657,7 +661,7 @@ bool Router::tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink){
  * Tree2tree maze routing, return the path from source to sink
  * If not success will throw runtime error.
  */
-Path Router::tree2tree_maze_routing(Grid *tmp_grid, Net *net, Subtree *source, Subtree *sink){
+Path Router::tree2treeMazeRouting(Grid *tmp_grid, Net *net, Subtree *source, Subtree *sink){
     /* Declaring */
     Vertex *current;
     auto comp = [](const Vertex *lhs, const Vertex *rhs) {return lhs->distance > rhs->distance;};

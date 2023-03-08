@@ -2,5 +2,7 @@
 obj/
 out/
 draw/
+compare_case/
 pass_small_case/
+small_reroute_case/
 router

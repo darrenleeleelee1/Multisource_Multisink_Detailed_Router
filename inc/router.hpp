@@ -7,11 +7,13 @@ class Router
 public:
     Layout *layout;
     Grid *grid;
+    Grid *pin_and_obstacle_grid;
     static const std::vector<std::vector<Coordinate3D>> move_orientation;
     Router() {}
     Router(Layout *l) {
         this->layout = l;
         this->grid = new Grid(l->width, l->height);
+        this->pin_and_obstacle_grid = new Grid(this->layout);
         // number of net + 1 means obstacle
         for(auto o : l->obstacles) this->grid->setObstacles(l->netlist.size(), o.start_point, o.end_point);
         for(auto n : l->netlist){
@@ -19,14 +21,16 @@ public:
         }
     }
     ~Router() {
-        delete grid;
+        delete this->grid;
+        delete this->pin_and_obstacle_grid;
     }
 
     void main();
     void twoPinNetDecomposition();
     bool outOfBound(Coordinate3D p);
-    bool tree2tree_maze_routing(Net *net, Subtree *source, Subtree *sink);
-    Path tree2tree_maze_routing(Grid *tmp_grid, Net *net, Subtree *source, Subtree *sink);
+    bool tree2treeMazeRouting(Net *net, Subtree *source, Subtree *sink);
+    Path tree2treeMazeRouting(Grid *tmp_grid, Net *net, Subtree *source, Subtree *sink);
+    void routing(Net &n, int source_index, int sink_index);
 };
 
 std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated_tree);

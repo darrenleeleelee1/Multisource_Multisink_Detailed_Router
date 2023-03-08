@@ -63,7 +63,7 @@ draw_dir="./draw"
 log_path="tmp.log"
 # clean
 if [ "$clean" == true ]; then
-    make clean_out && make clean
+    make clean && make clean_out
 fi
 # build
 if [ "$build" == true ]; then
@@ -77,7 +77,7 @@ if [ "$run" == true ] && [ "$check_memory" == false ]; then
         testname=$(basename "$testcase")
         testnum=$(echo "$testname" | sed 's/^test0*\([0-9]*\)\.txt$/\1/')
         echo "Running case $testname"
-        ./router "$testcase" "$out_dir/$testname" >"$log_path"
+        ./router "$testcase" "$out_dir/$testname" >"$log_path" 
         if [ $? -ne 0 ]; then
             fault_files="$fault_files$testnum, "
         elif grep -q "reroute" "$log_path"; then
@@ -136,7 +136,7 @@ if [ "$verify" == true ]; then
         echo "Not run at test{$not_run_files}"
     fi
     if [ -n "$not_pass_files" ]; then
-        echo "Failed at test{$not_pass_files}"
+        echo "Failure at test{$not_pass_files}"
     else
         echo "All pass!"
     fi
