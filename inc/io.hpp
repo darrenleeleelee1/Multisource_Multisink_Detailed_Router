@@ -42,10 +42,10 @@ void readLayout(Layout *layout, char const *file_path){
                     getline(in_file, line); io::tokenLine(tokens, line);
                     if(stoi(tokens[2]) == 0)
                         layout->obstacles.at(i) = Obstacle{stoi(tokens[0]), stoi(tokens[1]), stoi(tokens[2])
-                                        , stoi(tokens[3]), stoi(tokens[4]) - 1, stoi(tokens[5])};
+                                        , stoi(tokens[3]) - 1, stoi(tokens[4]) - 1, stoi(tokens[5])};
                     else
                         layout->obstacles.at(i) = Obstacle{stoi(tokens[0]), stoi(tokens[1]), stoi(tokens[2])
-                                        , stoi(tokens[3]) - 1, stoi(tokens[4]), stoi(tokens[5])};
+                                        , stoi(tokens[3]) - 1, stoi(tokens[4]) - 1, stoi(tokens[5])};
                 }
             }
             else if(tokens[0] == "Net_num"){
@@ -91,9 +91,9 @@ void writeLayout(Layout *layout, char const *file_path){
     for(unsigned i = 0; i < layout->obstacles.size(); i++){
         out_file << layout->obstacles.at(i).start_point.x << " " << layout->obstacles.at(i).start_point.y << " " << layout->obstacles.at(i).start_point.z << " ";
         if(layout->obstacles.at(i).start_point.z == 0)
-            out_file << layout->obstacles.at(i).end_point.x << " " << layout->obstacles.at(i).end_point.y + 1<< " " << layout->obstacles.at(i).end_point.z;
+            out_file << layout->obstacles.at(i).end_point.x + 1 << " " << layout->obstacles.at(i).end_point.y + 1 << " " << layout->obstacles.at(i).end_point.z;
         else
-            out_file << layout->obstacles.at(i).end_point.x + 1 << " " << layout->obstacles.at(i).end_point.y<< " " << layout->obstacles.at(i).end_point.z;
+            out_file << layout->obstacles.at(i).end_point.x + 1 << " " << layout->obstacles.at(i).end_point.y + 1 << " " << layout->obstacles.at(i).end_point.z;
         out_file << "\n";
     }
     out_file << "Net_num " << layout->netlist.size() << "\n";
