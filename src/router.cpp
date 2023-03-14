@@ -6,13 +6,28 @@
 #include "router.hpp"
 const std::vector<std::vector<Coordinate3D>> Router::move_orientation = {{Coordinate3D(1,0,0), Coordinate3D(-1,0,0), Coordinate3D(0,0,1)},
                             {Coordinate3D(0,1,0), Coordinate3D(0,-1,0), Coordinate3D(0,0,-1)}};
-int mazeRouteCost(Router *R, Coordinate3D sp, Coordinate3D ep){
-    int cost = 0;
+double mazeRouteCost(Router *R, Coordinate3D sp, Coordinate3D ep){
+    double cost = 0;
     if(sp.z != ep.z){
         cost += R->layout->via_cost;
     }
     cost += std::abs(sp.x - ep.x) * R->layout->horizontal_segment_cost + std::abs(sp.y - ep.y) * R->layout->vertical_segment_cost;
+    cost += R->grid->history_cost.at(ep.x).at(ep.y).at(ep.z);
     return cost;
+}
+void Router::addHistoryCost(Path *p){
+    for(auto s : p->segments){
+        if(s->z == 0){
+            for(int i = s->getX(); i <= s->getNeighbor(); i++){
+                grid->history_cost.at(i).at(s->getY()).at(s->z) += 0.1;
+            }
+        }
+        else if(s->z == 1){
+            for(int i = s->getY(); i <= s->getNeighbor(); i++){
+                grid->history_cost.at(s->getX()).at(i).at(s->z) += 0.1;
+            }
+        }
+    }
 }
 /* Insert the path from the grid */
 void insertPathsToGrid(Grid *grid, Path *insert_candidate, int net_id){
@@ -126,6 +141,7 @@ void removePathsFromGrid(Grid *grid, Path *remove_path_locus, Path *remove_candi
 }
 /* When creating a stiener node on a path, the path need to be split*/
 bool splitPaths(Grid *grid, Coordinate3D point, Path *split_candidate, std::vector<Path*> &updated_paths, int net_id){
+    split_candidate->lineUpSegments();
     for(unsigned i = 0; i < updated_paths.size(); i++){
         auto &p = updated_paths.at(i);
         if(p == split_candidate){
@@ -138,7 +154,8 @@ bool splitPaths(Grid *grid, Coordinate3D point, Path *split_candidate, std::vect
                 auto &s = p->segments.at(j);
                 if(s->colinear(point)){
                     // Split segment
-                    if(!(point == s->startPoint() || point == s->endPoint())){
+                    if(!(Coordinate2D{point} == Coordinate2D{s->startPoint()} 
+                            || Coordinate2D{point} == Coordinate2D{s->endPoint()})){
                         Segment *new_segment = nullptr;
                         if(s->z == 0){
                             new_segment = new Segment(s->z, start_point.x, s->y, point.x);
@@ -165,7 +182,7 @@ bool splitPaths(Grid *grid, Coordinate3D point, Path *split_candidate, std::vect
                     else{
                         remove_list.push_back(s);
                         new_path->segments.push_back(s);
-                        start_point = ((s->startPoint().x == start_point.x && s->startPoint().y == start_point.y) ? Coordinate3D(s->endPoint().x, s->endPoint().y, (s->endPoint().z + 1) % 2) 
+                        start_point = ((Coordinate2D{s->startPoint()} == Coordinate2D{start_point}) ? Coordinate3D(s->endPoint().x, s->endPoint().y, (s->endPoint().z + 1) % 2) 
                                     : Coordinate3D(s->startPoint().x, s->startPoint().y, (s->startPoint().z + 1) % 2));
                         new_path->end_pin = start_point;
                         p->start_pin = new_path->end_pin;
@@ -271,9 +288,12 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
         removePathsFromGrid(grid, second_path);
 
         if(first_segment != nullptr && second_segment != nullptr && (first_segment->z == second_segment->z)){
-            first_segment->x = std::min(first_segment->getX(), second_segment->getX());
-            first_segment->y = std::min(first_segment->getY(), second_segment->getY());
-            first_segment->neighbor = std::max(first_segment->getNeighbor(), second_segment->getNeighbor());
+            int tmp_x = std::min(first_segment->getX(), second_segment->getX());
+            int tmp_y = std::min(first_segment->getY(), second_segment->getY());
+            int tmp_neighbor = std::max(first_segment->getNeighbor(), second_segment->getNeighbor());
+            first_segment->x = tmp_x;
+            first_segment->y = tmp_y;
+            first_segment->neighbor = tmp_neighbor;
             second_path->segments.erase(std::remove(second_path->segments.begin(), second_path->segments.end(), second_segment), second_path->segments.end());
             delete second_segment;
         }
@@ -352,9 +372,12 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
         removePathsFromGrid(grid, second_path);
 
         if(first_segment != nullptr && second_segment != nullptr && (first_segment->z == second_segment->z)){
-            first_segment->x = std::min(first_segment->getX(), second_segment->getX());
-            first_segment->y = std::min(first_segment->getY(), second_segment->getY());
-            first_segment->neighbor = std::max(first_segment->getNeighbor(), second_segment->getNeighbor());
+            int tmp_x = std::min(first_segment->getX(), second_segment->getX());
+            int tmp_y = std::min(first_segment->getY(), second_segment->getY());
+            int tmp_neighbor = std::max(first_segment->getNeighbor(), second_segment->getNeighbor());
+            first_segment->x = tmp_x;
+            first_segment->y = tmp_y;
+            first_segment->neighbor = tmp_neighbor;
             second_path->segments.erase(std::remove(second_path->segments.begin(), second_path->segments.end(), second_segment), second_path->segments.end());
             delete second_segment;
         }
@@ -423,7 +446,6 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
                 }
                 pin_layer.push_back(refine_candidate);
                 other_layer.pop_back();
-                throw std::runtime_error("TEST");
             }
         }
     }
@@ -451,6 +473,29 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
     }
     // Find the rip_up_candidate->end_pin at which tree
     int reroute_second_subtree = -1;
+    // debug
+    // roots.clear();
+    // int tcnt = 1;
+    // for(unsigned i = 0; i < updated_tree->coordinate2index.size(); i++){
+    //     int root = updated_tree->find(i);
+    //     if(roots.count(root)) continue;
+    //     roots.insert(root);
+    //     std::cout << "Tee#" << tcnt++ << " ";
+    //     std::cout << "Net#" << net_id << " :\n";
+    //     int pcnt = 1;
+    //     for(auto e : updated_tree->at(root)->paths){
+    //         std::cout << pcnt++ << ":" << e->start_pin.toString() << " " << e->end_pin.toString() << "\n";
+    //         for(auto s : e->segments){
+    //             std::cout << s->toString() << ", ";
+    //         }
+    //         std::cout << "\n";
+    //     }
+    //     std::cout << "\n";
+    // }
+    // if(rip_up_candidate->end_pin == Coordinate3D{30, 10, 0}){
+    //     int debug = 0;
+    // }
+    //debug
     roots.clear();
     for(unsigned i = 0; i < updated_tree->coordinate2index.size(); i++){
         int root = updated_tree->find(i);
@@ -567,8 +612,6 @@ bool Router::tree2treeMazeRouting(Net *net, Subtree *source, Subtree *sink){
         Path *tmp_path = new Path();
         tmp_path->start_pin = current->coordinate;
 
-        source->paths.push_back(tmp_path);
-
         Segment *tmp_seg = nullptr;
         while(current->prevertex != nullptr){
             if(tmp_seg == nullptr){
@@ -593,14 +636,13 @@ bool Router::tree2treeMazeRouting(Net *net, Subtree *source, Subtree *sink){
                 tmp_seg->x = current->coordinate.x;
                 tmp_seg->y = current->coordinate.y;
             }
-            current->obstacle = net->id;
-            if(tmp_path != nullptr) current->cur_paths.push_back(tmp_path);
+            
+            
             current = current->prevertex;
         }
-
-        current->obstacle = net->id;
-        if(tmp_path != nullptr) current->cur_paths.push_back(tmp_path);
-
+        if(tmp_seg == nullptr){
+            throw std::runtime_error("tmp_seg is null.");
+        }
         if(tmp_seg->x != current->coordinate.x || tmp_seg->y != current->coordinate.y){
             if(tmp_seg->z == 0){
                 tmp_seg->neighbor = current->coordinate.x;
@@ -612,68 +654,97 @@ bool Router::tree2treeMazeRouting(Net *net, Subtree *source, Subtree *sink){
         }
 
         tmp_path->end_pin = current->coordinate;
-        /* Split Path */
-        std::unordered_set<Path*> path_count;
-        path_count.insert(grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths.begin()
-                , grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths.end());
-        path_count.insert(grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at((tmp_path->start_pin.z + 1) % 2)->cur_paths.begin()
-                , grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at((tmp_path->start_pin.z + 1) % 2)->cur_paths.end());
+        /* Tree and tree overlapp */
+        if(Coordinate2D{tmp_path->start_pin} == Coordinate2D{tmp_path->end_pin}){
+            Coordinate3D split_point = tmp_path->start_pin;
+            if(net->tree->pinset.count(tmp_path->end_pin)) split_point = tmp_path->end_pin;
+            std::unordered_set<Path*> split_paths;
+            split_paths.insert(grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths.begin()
+                    , grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths.end());
+            split_paths.insert(grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths.begin()
+                    , grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths.end());
+            for(auto sp : split_paths){
+                if(Coordinate2D{sp->start_pin} == Coordinate2D{split_point} || Coordinate2D{sp->end_pin} == Coordinate2D{split_point}){
+                    continue;
+                }
+                bool split = false;
+                // Check source->paths contain the tmp_path->start_pin
+                if(!split) split = splitPaths(this->grid, split_point, sp, source->paths, net->id);
+                // Check sink->paths contain the tmp_path->start_pin
+                if(!split) split = splitPaths(this->grid, split_point, sp, sink->paths, net->id);
+            }
 
-        if(path_count.size() == 2){
-            if(!source->pinlist.count(tmp_path->start_pin) && !source->pinlist.count(Coordinate3D{tmp_path->start_pin.x, tmp_path->start_pin.y, (tmp_path->start_pin.z + 1) % 2})){
-                if(!sink->pinlist.count(tmp_path->start_pin) && !sink->pinlist.count(Coordinate3D{tmp_path->start_pin.x, tmp_path->start_pin.y, (tmp_path->start_pin.z + 1) % 2})){
-                    std::unordered_set<Path*> splited; splited.insert(tmp_path);
-                    bool split = false;
-                    for(auto &split_candidate_path : this->grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths){
-                        if(splited.count(split_candidate_path)) continue;
-                        splited.insert(split_candidate_path);
-                        // Check source->paths contain the tmp_path->start_pin
-                        if(!split) split = splitPaths(this->grid, tmp_path->start_pin, split_candidate_path, source->paths, net->id);
-                        // Check sink->paths contain the tmp_path->start_pin
-                        if(!split) split = splitPaths(this->grid, tmp_path->start_pin, split_candidate_path, sink->paths, net->id);
-                        if(split) break;
-                    }
-                    for(auto &split_candidate_path : this->grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at((tmp_path->start_pin.z + 1) % 2)->cur_paths){
-                        if(splited.count(split_candidate_path)) continue;
-                        splited.insert(split_candidate_path);
-                        // Check source->paths contain the tmp_path->start_pin
-                        if(!split) split = splitPaths(this->grid, tmp_path->start_pin, split_candidate_path, source->paths, net->id);
-                        // Check sink->paths contain the tmp_path->start_pin
-                        if(!split) split = splitPaths(this->grid, tmp_path->start_pin, split_candidate_path, sink->paths, net->id);
-                        if(split) break;
-                    }
-                }
-            }
-            
+            delete tmp_path;
         }
-        path_count.clear();
-        path_count.insert(grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths.begin()
-                , grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths.end());
-        path_count.insert(grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at((tmp_path->end_pin.z + 1) % 2)->cur_paths.begin()
-                , grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at((tmp_path->end_pin.z + 1) % 2)->cur_paths.end());
-        if(path_count.size() == 2){
-            if(!source->pinlist.count(tmp_path->end_pin) && !source->pinlist.count(Coordinate3D{tmp_path->end_pin.x, tmp_path->end_pin.y, (tmp_path->end_pin.z + 1) % 2})){
-                if(!sink->pinlist.count(tmp_path->end_pin) && !sink->pinlist.count(Coordinate3D{tmp_path->end_pin.x, tmp_path->end_pin.y, (tmp_path->end_pin.z + 1) % 2})){
-                    std::unordered_set<Path*> splited; splited.insert(tmp_path);
-                    bool split = false;
-                    for(auto &split_candidate_path :  this->grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths){
-                        if(splited.count(split_candidate_path)) continue;
-                        // Then check source->paths contain the tmp_path->end_pin
-                        if(!split) split = splitPaths(this->grid, tmp_path->end_pin, split_candidate_path, source->paths, net->id);
-                        // Then check sink->paths contain the tmp_path->end_pin
-                        if(!split) split = splitPaths(this->grid, tmp_path->end_pin, split_candidate_path, sink->paths, net->id);
-                        if(split) break;
+        else{
+            insertPathsToGrid(grid, tmp_path, net->id);
+
+            source->paths.push_back(tmp_path);
+
+            /* Split Path */
+            std::unordered_set<Path*> path_count;
+            path_count.insert(grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths.begin()
+                    , grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths.end());
+            path_count.insert(grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at((tmp_path->start_pin.z + 1) % 2)->cur_paths.begin()
+                    , grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at((tmp_path->start_pin.z + 1) % 2)->cur_paths.end());
+
+            if(path_count.size() == 2){
+                if(!source->pinlist.count(tmp_path->start_pin) && !source->pinlist.count(Coordinate3D{tmp_path->start_pin.x, tmp_path->start_pin.y, (tmp_path->start_pin.z + 1) % 2})){
+                    if(!sink->pinlist.count(tmp_path->start_pin) && !sink->pinlist.count(Coordinate3D{tmp_path->start_pin.x, tmp_path->start_pin.y, (tmp_path->start_pin.z + 1) % 2})){
+                        std::unordered_set<Path*> splited; splited.insert(tmp_path);
+                        bool split = false;
+                        for(auto &split_candidate_path : this->grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at(tmp_path->start_pin.z)->cur_paths){
+                            if(splited.count(split_candidate_path)) continue;
+                            splited.insert(split_candidate_path);
+                            // Check source->paths contain the tmp_path->start_pin
+                            if(!split) split = splitPaths(this->grid, tmp_path->start_pin, split_candidate_path, source->paths, net->id);
+                            // Check sink->paths contain the tmp_path->start_pin
+                            if(!split) split = splitPaths(this->grid, tmp_path->start_pin, split_candidate_path, sink->paths, net->id);
+                            if(split) break;
+                        }
+                        for(auto &split_candidate_path : this->grid->graph.at(tmp_path->start_pin.x).at(tmp_path->start_pin.y).at((tmp_path->start_pin.z + 1) % 2)->cur_paths){
+                            if(splited.count(split_candidate_path)) continue;
+                            splited.insert(split_candidate_path);
+                            // Check source->paths contain the tmp_path->start_pin
+                            if(!split) split = splitPaths(this->grid, tmp_path->start_pin, split_candidate_path, source->paths, net->id);
+                            // Check sink->paths contain the tmp_path->start_pin
+                            if(!split) split = splitPaths(this->grid, tmp_path->start_pin, split_candidate_path, sink->paths, net->id);
+                            if(split) break;
+                        }
                     }
-                    for(auto &split_candidate_path :  this->grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at((tmp_path->end_pin.z + 1) % 2)->cur_paths){
-                        if(splited.count(split_candidate_path)) continue;
-                        // Then check source->paths contain the tmp_path->end_pin
-                        if(!split) split = splitPaths(this->grid, tmp_path->end_pin, split_candidate_path, source->paths, net->id);
-                        // Then check sink->paths contain the tmp_path->end_pin
-                        if(!split) split = splitPaths(this->grid, tmp_path->end_pin, split_candidate_path, sink->paths, net->id);
-                        if(split) break;
+                }
+                
+            }
+            path_count.clear();
+            path_count.insert(grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths.begin()
+                    , grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths.end());
+            path_count.insert(grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at((tmp_path->end_pin.z + 1) % 2)->cur_paths.begin()
+                    , grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at((tmp_path->end_pin.z + 1) % 2)->cur_paths.end());
+            if(path_count.size() == 2){
+                if(!source->pinlist.count(tmp_path->end_pin) && !source->pinlist.count(Coordinate3D{tmp_path->end_pin.x, tmp_path->end_pin.y, (tmp_path->end_pin.z + 1) % 2})){
+                    if(!sink->pinlist.count(tmp_path->end_pin) && !sink->pinlist.count(Coordinate3D{tmp_path->end_pin.x, tmp_path->end_pin.y, (tmp_path->end_pin.z + 1) % 2})){
+                        std::unordered_set<Path*> splited; splited.insert(tmp_path);
+                        bool split = false;
+                        for(auto &split_candidate_path :  this->grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at(tmp_path->end_pin.z)->cur_paths){
+                            if(splited.count(split_candidate_path)) continue;
+                            // Then check source->paths contain the tmp_path->end_pin
+                            if(!split) split = splitPaths(this->grid, tmp_path->end_pin, split_candidate_path, source->paths, net->id);
+                            // Then check sink->paths contain the tmp_path->end_pin
+                            if(!split) split = splitPaths(this->grid, tmp_path->end_pin, split_candidate_path, sink->paths, net->id);
+                            if(split) break;
+                        }
+                        for(auto &split_candidate_path :  this->grid->graph.at(tmp_path->end_pin.x).at(tmp_path->end_pin.y).at((tmp_path->end_pin.z + 1) % 2)->cur_paths){
+                            if(splited.count(split_candidate_path)) continue;
+                            // Then check source->paths contain the tmp_path->end_pin
+                            if(!split) split = splitPaths(this->grid, tmp_path->end_pin, split_candidate_path, source->paths, net->id);
+                            // Then check sink->paths contain the tmp_path->end_pin
+                            if(!split) split = splitPaths(this->grid, tmp_path->end_pin, split_candidate_path, sink->paths, net->id);
+                            if(split) break;
+                        }
                     }
                 }
             }
+
         }
     }
     /* Post job cleanup */

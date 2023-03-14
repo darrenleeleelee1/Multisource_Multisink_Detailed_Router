@@ -1,4 +1,5 @@
 #pragma once
+#include <float.h> // for DBL_MAX
 #include <vector>
 #include <cstdint>
 #include "layout.hpp"
@@ -7,7 +8,7 @@ public:
     Coordinate3D coordinate;
     std::vector<Path*> cur_paths;
     Vertex *prevertex = nullptr;
-    int distance = INT32_MAX;
+    double distance = DBL_MAX;
     int obstacle = -1;
     bool is_sink = false;
     Vertex(){}
@@ -21,21 +22,26 @@ public:
 class Grid{
 public:
     std::vector<std::vector<std::vector<Vertex*>>> graph;
+    std::vector<std::vector<std::vector<double>>> history_cost;
     Grid() {}
     Grid(int width, int height){
         int z_depth = 2;
         
         graph.resize(static_cast<unsigned>(width + 1));
-        
+        history_cost.resize(static_cast<unsigned>(width + 1));
+
         for(int i = 0; i <= width; i++){
             graph.at(i).resize(height + 1);
+            history_cost.at(i).resize(height + 1);
         }
         
         for(int i = 0; i <= width; i++){
             for(int j = 0; j <= height; j++){
                 graph.at(i).at(j).resize(z_depth);
+                history_cost.at(i).at(j).resize(z_depth);
                 for(int k = 0; k < z_depth; k++){
                     graph.at(i).at(j).at(k) = new Vertex{i, j, k, false, false};
+                    history_cost.at(i).at(j).at(k) = 0.0;
                 }
             }
         }
@@ -45,16 +51,20 @@ public:
         int z_depth = 2;
         
         graph.resize(static_cast<unsigned>(width + 1));
-        
+        history_cost.resize(static_cast<unsigned>(width + 1));
+
         for(int i = 0; i <= width; i++){
             graph.at(i).resize(height + 1);
+            history_cost.at(i).resize(height + 1);
         }
         
         for(int i = 0; i <= width; i++){
             for(int j = 0; j <= height; j++){
                 graph.at(i).at(j).resize(z_depth);
+                history_cost.at(i).at(j).resize(z_depth);
                 for(int k = 0; k < z_depth; k++){
                     graph.at(i).at(j).at(k) = new Vertex{i, j, k, false, false};
+                    history_cost.at(i).at(j).at(k) = 0.0;
                 }
             }
         }

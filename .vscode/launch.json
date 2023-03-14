@@ -9,10 +9,18 @@
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/router",
-        "args": ["./case/test1.txt", "./out/test1.txt"],
+        "args": ["./case/test14.txt", "./out/test14.txt"],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}/",
         "environment": [],
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            }
+        ],
         },
     ]
+    
 }

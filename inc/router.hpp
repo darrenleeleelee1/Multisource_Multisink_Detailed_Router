@@ -30,6 +30,7 @@ public:
     bool outOfBound(Coordinate3D p);
     bool tree2treeMazeRouting(Net *net, Subtree *source, Subtree *sink);
     Path tree2treeMazeRouting(Grid *tmp_grid, Net *net, Subtree *source, Subtree *sink);
+    void addHistoryCost(Path *p);
     void routing(Net &n, int source_index, int sink_index);
 };
 

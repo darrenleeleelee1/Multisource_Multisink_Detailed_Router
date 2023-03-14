@@ -3,8 +3,18 @@
 #include <tuple>
 #include <deque>
 #include "router.hpp"
+int gcnt = 0;
 void Router::routing(Net &n, int source_index, int sink_index){
     std::deque<std::tuple<Net*, int, int>> rip_up_pair;
+    if(n.tree->find(source_index) == n.tree->find(sink_index)){
+        for(unsigned i = 0; i < n.tree->parents.size(); i++){
+            if(n.tree->find(i) != n.tree->find(source_index)){
+                sink_index = i;
+                break;
+            }
+        }
+    }
+    if(n.tree->find(source_index) == n.tree->find(sink_index)) return;
     if(!tree2treeMazeRouting(&n, n.tree->at(source_index), n.tree->at(sink_index))){
         Path tmp_path = tree2treeMazeRouting(pin_and_obstacle_grid, &n, n.tree->at(source_index), n.tree->at(sink_index));
 
@@ -17,9 +27,10 @@ void Router::routing(Net &n, int source_index, int sink_index){
                         if(grid->graph.at(i).at(s->getY()).at(s->z)->cur_paths.size() > 0){
                             rip_up_candidate = grid->graph.at(i).at(s->getY()).at(s->z)->cur_paths.at(0);
                             if(rip_up_candidate != nullptr){
+                                if(rip_up_candidate != nullptr) addHistoryCost(rip_up_candidate);
                                 auto &current_net = layout->netlist.at(grid->graph.at(i).at(s->getY()).at(s->z)->obstacle);
                                 const auto &[souce_index, sink_index] = ripUpPaths(grid, rip_up_candidate, current_net.tree);
-                                rip_up_pair.push_front(std::make_tuple(&current_net, souce_index, sink_index));
+                                rip_up_pair.push_back(std::make_tuple(&current_net, souce_index, sink_index));
                             }
                             break;
                         }
@@ -30,9 +41,10 @@ void Router::routing(Net &n, int source_index, int sink_index){
                         if(grid->graph.at(s->getX()).at(i).at(s->z)->cur_paths.size() > 0){
                             rip_up_candidate = grid->graph.at(s->getX()).at(i).at(s->z)->cur_paths.at(0);
                             if(rip_up_candidate != nullptr){
+                                if(rip_up_candidate != nullptr) addHistoryCost(rip_up_candidate);
                                 auto &current_net = layout->netlist.at(grid->graph.at(s->getX()).at(i).at(s->z)->obstacle);
                                 const auto &[souce_index, sink_index] = ripUpPaths(grid, rip_up_candidate, current_net.tree);
-                                rip_up_pair.push_front(std::make_tuple(&current_net, souce_index, sink_index));
+                                rip_up_pair.push_back(std::make_tuple(&current_net, souce_index, sink_index));
                             }
                             break;
                         }
@@ -40,11 +52,9 @@ void Router::routing(Net &n, int source_index, int sink_index){
                 }
                 if(rip_up_candidate != nullptr) break;
             }
-            
         }while(rip_up_candidate != nullptr);
 
-
-        rip_up_pair.push_front(std::make_tuple(&n, source_index, sink_index));
+        rip_up_pair.push_back(std::make_tuple(&n, source_index, sink_index));
     }
     else if(!n.tree->mergeTree(source_index, sink_index)) {
         throw std::runtime_error("Error: merge tree error");
@@ -56,11 +66,18 @@ void Router::routing(Net &n, int source_index, int sink_index){
 }
 void Router::main(){
     this->twoPinNetDecomposition();
-    
     for(auto &n : layout->netlist){
         n.initTrees();
         for(auto &tpn : n.two_pins_net){
             this->routing(n, tpn.first, tpn.second);
+            // reset history cost
+            for(unsigned i = 0; i < grid->history_cost.size(); i++){
+                for(unsigned j = 0; j < grid->history_cost.at(i).size(); j++){
+                    for(unsigned k = 0; k < grid->history_cost.at(i).at(j).size(); k++){
+                        grid->history_cost.at(i).at(j).at(k) = 0.0;
+                    }
+                }
+            }
         }
         /* TESTING path is correct set on the grid */
         for(auto e : n.tree->getPath()){

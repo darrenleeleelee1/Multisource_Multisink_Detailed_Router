@@ -57,7 +57,7 @@ if [ "$help" == true ]; then
     exit 0
 fi
 # declaring variables
-case_dir="./pass_small_case"
+case_dir="./case"
 out_dir="./out"
 draw_dir="./draw"
 log_path="tmp.log"

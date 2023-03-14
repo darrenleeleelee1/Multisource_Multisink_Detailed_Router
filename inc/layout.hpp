@@ -3,6 +3,7 @@
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
+#include <fstream>
 class Tree;
 class Net;
 class Coordinate3D{
@@ -22,17 +23,6 @@ public:
 };
 inline void hash_combine(std::size_t& seed, const int& v) {
 	seed ^= std::hash<int>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-}
-namespace std {
-    template<> struct hash<Coordinate3D> {
-        size_t operator()(const Coordinate3D& c) const {
-            size_t seed = 0;
-            hash_combine(seed, c.x);
-            hash_combine(seed, c.y);
-            hash_combine(seed, c.z);
-            return seed;
-        }
-    };
 }
 class Coordinate2D{
 public:
@@ -55,6 +45,26 @@ public:
         return this->x < other.x;
     }
 };
+namespace std {
+    template<> struct hash<Coordinate3D> {
+        size_t operator()(const Coordinate3D& c) const {
+            size_t seed = 0;
+            hash_combine(seed, c.x);
+            hash_combine(seed, c.y);
+            hash_combine(seed, c.z);
+            return seed;
+        }
+    };
+
+	template<> struct hash<Coordinate2D> {
+        size_t operator()(const Coordinate2D& c) const {
+            size_t seed = 0;
+            hash_combine(seed, c.x);
+            hash_combine(seed, c.y);
+            return seed;
+        }
+    };
+}
 class Obstacle{
 public:
 	Coordinate3D start_point, end_point;
@@ -169,6 +179,22 @@ public:
 			delete s;
 		}
 	}
+	void lineUpSegments(){
+		Coordinate3D sp = start_pin;
+		unsigned swap_index;
+		for(unsigned i = 0; i < segments.size(); i++){
+			for(unsigned j = i; j < segments.size(); j++){
+				if(Coordinate2D{sp} == Coordinate2D{segments.at(j)->startPoint()} || Coordinate2D{sp} == Coordinate2D{segments.at(j)->endPoint()}){
+					swap_index = j;
+					break;
+				}
+			}
+			std::swap(segments.at(i), segments.at(swap_index));
+			auto &s = segments.at(i);
+			sp = ((Coordinate2D{s->startPoint()} == Coordinate2D{sp}) ? Coordinate3D(s->endPoint().x, s->endPoint().y, (s->endPoint().z + 1) % 2) 
+                                    : Coordinate3D(s->startPoint().x, s->startPoint().y, (s->startPoint().z + 1) % 2));
+		}
+	}
 };
 class Subtree{
 public:
@@ -196,7 +222,7 @@ public:
 	std::vector<int> parents; // stores the parent of each node in the subtree
     std::vector<int> size; // stores the size of each subtree
 	std::vector<Subtree*> subtrees;
-	std::unordered_map<Coordinate3D, int> coordinate2index;
+	std::unordered_map<Coordinate2D, int> coordinate2index;
 	std::unordered_set<Coordinate3D> pinset;
 	Tree() {}
 	Tree(std::vector<Coordinate3D> pins) {
@@ -207,7 +233,7 @@ public:
 		subtrees.resize(n);
 		for (unsigned i = 0; i < n; i++){
 			subtrees.at(i) = (new Subtree(pins.at(i)));
-			this->coordinate2index[pins.at(i)] = i;
+			this->coordinate2index[Coordinate2D{pins.at(i)}] = i;
 		}
 	}
 	Subtree* at(int index){
@@ -273,27 +299,27 @@ public:
 		int cnt = 0;
 		for (auto p : pinset){
 			subtrees.at(cnt) = (new Subtree(p));
-			coordinate2index[p] = cnt;
+			coordinate2index[Coordinate2D{p}] = cnt;
 			cnt++;
 		}
 		for(auto e : new_paths){
-			if(!coordinate2index.count(e->start_pin)){
+			if(!coordinate2index.count(Coordinate2D{e->start_pin})){
 				parents.push_back(-1);
 				size.push_back(1);
 				subtrees.push_back(new Subtree(e->start_pin));
-				coordinate2index[e->start_pin] = cnt++;
+				coordinate2index[Coordinate2D{e->start_pin}] = cnt++;
 			}
-			if(!coordinate2index.count(e->end_pin)){
+			if(!coordinate2index.count(Coordinate2D{e->end_pin})){
 				parents.push_back(-1);
 				size.push_back(1);
 				subtrees.push_back(new Subtree(e->end_pin));
-				coordinate2index[e->end_pin] = cnt++;
+				coordinate2index[Coordinate2D{e->end_pin}] = cnt++;
 			}
 		}
 		for(auto e : new_paths){
-			int root = find(coordinate2index[e->start_pin]);
+			int root = find(coordinate2index[Coordinate2D{e->start_pin}]);
 			subtrees.at(root)->paths.push_back(e);
-			if(!mergeTree(coordinate2index[e->start_pin], coordinate2index[e->end_pin])){
+			if(!mergeTree(coordinate2index[Coordinate2D{e->start_pin}], coordinate2index[Coordinate2D{e->end_pin}])){
 				throw std::runtime_error("Failure: not sure what this behavior");
 			}
 		}
@@ -409,13 +435,13 @@ public:
 	// For Input
 	int width, height;
 	int num_of_layers = 2;
-	int via_cost = 1;
-	int horizontal_segment_cost = 1, vertical_segment_cost = 1;
+	double via_cost = 1;
+	double horizontal_segment_cost = 1, vertical_segment_cost = 1;
 	std::vector<Obstacle> obstacles;
 	std::vector<Net> netlist;
 	
 	Layout(){}
-	Layout(int w, int h, int nol, int vc, int hsc, int vsc)
+	Layout(int w, int h, int nol, double vc, double hsc, double vsc)
 		: width(w), height(h), num_of_layers(nol), via_cost(vc)
 			, horizontal_segment_cost(hsc), vertical_segment_cost(vsc) {}
 	~Layout(){}
@@ -427,4 +453,56 @@ public:
 		}
 		return sum;
 	}
+
+	// debug
+	void writeForDebug(unsigned test_num){
+		char file_path[] = "out/tmp.txt"; 
+		std::ofstream out_file(file_path, std::ofstream::trunc);
+		out_file << "Width " << this->width << "\n";
+		out_file << "Height " << this->height << "\n";
+		out_file << "Layer " << this->num_of_layers << "\n";
+		out_file << "Total_WL " << 0 << "\n";
+		out_file << "Obstacle_num " << this->obstacles.size() << "\n";
+		for(unsigned i = 0; i < this->obstacles.size(); i++){
+			out_file << this->obstacles.at(i).start_point.x << " " << this->obstacles.at(i).start_point.y << " " << this->obstacles.at(i).start_point.z << " ";
+			if(this->obstacles.at(i).start_point.z == 0)
+				out_file << this->obstacles.at(i).end_point.x << " " << this->obstacles.at(i).end_point.y + 1<< " " << this->obstacles.at(i).end_point.z;
+			else
+				out_file << this->obstacles.at(i).end_point.x + 1 << " " << this->obstacles.at(i).end_point.y<< " " << this->obstacles.at(i).end_point.z;
+			out_file << "\n";
+		}
+		out_file << "Net_num " << 1 << "\n";
+		for(unsigned i = test_num; i <= test_num; i++){
+			// debug
+			this->netlist.at(i).horizontal_segments.clear();
+			this->netlist.at(i).vertical_segments.clear();
+			this->netlist.at(i).vialist.clear();
+			// debug
+			this->netlist.at(i).segmentRegularize();
+			out_file << "Net_id " << this->netlist.at(i).id << "\n";
+			out_file << "pin_num " << this->netlist.at(i).pins.size() << "\n";
+			for(unsigned j = 0; j < this->netlist.at(i).pins.size(); j++){
+				out_file << this->netlist.at(i).pins.at(j).x << " " << this->netlist.at(i).pins.at(j).y << " " << this->netlist.at(i).pins.at(j).z << "\n";
+			}
+			out_file << "Via_num " << this->netlist.at(i).vialist.size() << "\n";
+			for(auto &v : this->netlist.at(i).vialist){
+				out_file << v.x << " " << v.y << "\n";
+			}
+			out_file << "H_segment_num " << this->netlist.at(i).horizontal_segments.size() << "\n";
+			for(unsigned j = 0; j < this->netlist.at(i).horizontal_segments.size(); j++){
+				out_file << this->netlist.at(i).horizontal_segments.at(j).start_point.x << " " << this->netlist.at(i).horizontal_segments.at(j).start_point.y 
+						<< " " << this->netlist.at(i).horizontal_segments.at(j).start_point.z << " ";
+				out_file << this->netlist.at(i).horizontal_segments.at(j).end_point.x + 1 << " " << this->netlist.at(i).horizontal_segments.at(j).end_point.y + 1
+						<< " " << this->netlist.at(i).horizontal_segments.at(j).end_point.z << "\n";
+			}
+			out_file << "V_segment_num " << this->netlist.at(i).vertical_segments.size() << "\n";
+			for(unsigned j = 0; j < this->netlist.at(i).vertical_segments.size(); j++){
+				out_file << this->netlist.at(i).vertical_segments.at(j).start_point.x << " " << this->netlist.at(i).vertical_segments.at(j).start_point.y 
+						<< " " << this->netlist.at(i).vertical_segments.at(j).start_point.z << " ";
+				out_file << this->netlist.at(i).vertical_segments.at(j).end_point.x + 1 << " " << this->netlist.at(i).vertical_segments.at(j).end_point.y + 1
+						<< " " << this->netlist.at(i).vertical_segments.at(j).end_point.z << "\n";
+			}
+		}
+	}
+	// debug
 };
