@@ -12,19 +12,19 @@ double mazeRouteCost(Router *R, Coordinate3D sp, Coordinate3D ep){
         cost += R->layout->via_cost;
     }
     cost += std::abs(sp.x - ep.x) * R->layout->horizontal_segment_cost + std::abs(sp.y - ep.y) * R->layout->vertical_segment_cost;
-    cost += R->grid->history_cost.at(ep.x).at(ep.y).at(ep.z);
+    cost += R->grid->history.at(ep.x).at(ep.y).at(ep.z);
     return cost;
 }
 void Router::addHistoryCost(Path *p){
     for(auto s : p->segments){
         if(s->z == 0){
             for(int i = s->getX(); i <= s->getNeighbor(); i++){
-                grid->history_cost.at(i).at(s->getY()).at(s->z) += 0.1;
+                grid->history.at(i).at(s->getY()).at(s->z) += history_cost;
             }
         }
         else if(s->z == 1){
             for(int i = s->getY(); i <= s->getNeighbor(); i++){
-                grid->history_cost.at(s->getX()).at(i).at(s->z) += 0.1;
+                grid->history.at(s->getX()).at(i).at(s->z) += history_cost;
             }
         }
     }
@@ -656,6 +656,7 @@ bool Router::tree2treeMazeRouting(Net *net, Subtree *source, Subtree *sink){
         tmp_path->end_pin = current->coordinate;
         /* Tree and tree overlapp */
         if(Coordinate2D{tmp_path->start_pin} == Coordinate2D{tmp_path->end_pin}){
+            if(tmp_seg != nullptr) delete tmp_seg;
             Coordinate3D split_point = tmp_path->start_pin;
             if(net->tree->pinset.count(tmp_path->end_pin)) split_point = tmp_path->end_pin;
             std::unordered_set<Path*> split_paths;

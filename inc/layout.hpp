@@ -158,6 +158,15 @@ public:
 		}
 		return 0;
 	}
+	double getCost(double horizontal_cost, double vertical_cost){
+		if(z == 0){
+			return (std::max(this->x, this->neighbor) - std::min(this->x, this->neighbor)) * horizontal_cost;
+		}
+		else if(z == 1){
+			return (std::max(this->y, this->neighbor) - std::min(this->y, this->neighbor)) * vertical_cost;
+		}
+		return 0;
+	}
 };
 class Path{
 public:
@@ -370,9 +379,15 @@ public:
 	void initTrees(){
 		tree = new Tree(pins);
 	}
-	int getCost(){
-		// TODO: caculate
-		return 0;
+	double getCost(double horizontal_cost, double vertical_cost, double via_cost){
+		double sum = 0;
+		for(auto &p : tree->getPath()){
+			for(auto &s : p->segments){
+				sum += s->getCost(horizontal_cost, vertical_cost);
+			}
+		}
+		sum += vialist.size() * via_cost;
+		return sum;
 	}
 	int getWirelength(){
 		int sum = 0;
@@ -454,14 +469,24 @@ public:
 		return sum;
 	}
 
+	double getCost(){
+		double sum = 0;
+		for(unsigned i = 0; i < this->netlist.size(); i++){
+			sum += this->netlist.at(i).getCost(horizontal_segment_cost, vertical_segment_cost, via_cost);
+		}
+		return sum;
+	}
+
 	// debug
 	void writeForDebug(unsigned test_num){
-		char file_path[] = "out/tmp.txt"; 
+		char file_path[64]; 
+		sprintf(file_path, "out/tmp_%u.txt", test_num);
 		std::ofstream out_file(file_path, std::ofstream::trunc);
 		out_file << "Width " << this->width << "\n";
 		out_file << "Height " << this->height << "\n";
 		out_file << "Layer " << this->num_of_layers << "\n";
 		out_file << "Total_WL " << 0 << "\n";
+		out_file << "Cost " << 0 << "\n";
 		out_file << "Obstacle_num " << this->obstacles.size() << "\n";
 		for(unsigned i = 0; i < this->obstacles.size(); i++){
 			out_file << this->obstacles.at(i).start_point.x << " " << this->obstacles.at(i).start_point.y << " " << this->obstacles.at(i).start_point.z << " ";

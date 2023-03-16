@@ -82,11 +82,14 @@ void readLayout(Layout *layout, char const *file_path){
 }
 
 void writeLayout(Layout *layout, char const *file_path){
+    /* Initial */
+    for(unsigned i = 0; i < layout->netlist.size(); i++) layout->netlist.at(i).segmentRegularize();
     std::ofstream out_file(file_path, std::ofstream::trunc);
     out_file << "Width " << layout->width << "\n";
     out_file << "Height " << layout->height << "\n";
     out_file << "Layer " << layout->num_of_layers << "\n";
     out_file << "Total_WL " << layout->getWirelength() << "\n";
+    out_file << "Cost " << layout->getCost() << "\n";
     out_file << "Obstacle_num " << layout->obstacles.size() << "\n";
     for(unsigned i = 0; i < layout->obstacles.size(); i++){
         out_file << layout->obstacles.at(i).start_point.x << " " << layout->obstacles.at(i).start_point.y << " " << layout->obstacles.at(i).start_point.z << " ";
@@ -98,7 +101,6 @@ void writeLayout(Layout *layout, char const *file_path){
     }
     out_file << "Net_num " << layout->netlist.size() << "\n";
     for(unsigned i = 0; i < layout->netlist.size(); i++){
-        layout->netlist.at(i).segmentRegularize();
         out_file << "Net_id " << layout->netlist.at(i).id << "\n";
         out_file << "pin_num " << layout->netlist.at(i).pins.size() << "\n";
         for(unsigned j = 0; j < layout->netlist.at(i).pins.size(); j++){

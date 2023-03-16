@@ -9,6 +9,7 @@ public:
     Grid *grid;
     Grid *pin_and_obstacle_grid;
     static const std::vector<std::vector<Coordinate3D>> move_orientation;
+    double history_cost = 0.1;
     Router() {}
     Router(Layout *l) {
         this->layout = l;

@@ -77,7 +77,8 @@ if [ "$run" == true ] && [ "$check_memory" == false ]; then
         testname=$(basename "$testcase")
         testnum=$(echo "$testname" | sed 's/^test\([0-9]\+\)\.txt$/\1/')
         echo "Running case $testname"
-        ./router "$testcase" "$out_dir/$testname" >"$log_path" 
+        ./router "$testcase" "$out_dir/$testname" >"$log_path"
+        cat "$log_path" | grep 'Total'
         if [ $? -ne 0 ]; then
             fault_files="$fault_files$testnum, "
         elif grep -q "reroute" "$log_path"; then

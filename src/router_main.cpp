@@ -3,7 +3,9 @@
 #include <tuple>
 #include <deque>
 #include "router.hpp"
+// debug
 int gcnt = 0;
+// debug
 void Router::routing(Net &n, int source_index, int sink_index){
     std::deque<std::tuple<Net*, int, int>> rip_up_pair;
     if(n.tree->find(source_index) == n.tree->find(sink_index)){
@@ -17,7 +19,14 @@ void Router::routing(Net &n, int source_index, int sink_index){
     if(n.tree->find(source_index) == n.tree->find(sink_index)) return;
     if(!tree2treeMazeRouting(&n, n.tree->at(source_index), n.tree->at(sink_index))){
         Path tmp_path = tree2treeMazeRouting(pin_and_obstacle_grid, &n, n.tree->at(source_index), n.tree->at(sink_index));
-
+        addHistoryCost(&tmp_path);
+        // debug
+        std::cout << "Net#" << n.id << "\n";
+        for(auto i : tmp_path.segments){
+            std::cout << i->startPoint().toString() << "-" << i->endPoint().toString() << "\n";
+        }
+        std::cout << "\n";
+        // debug
         Path *rip_up_candidate = nullptr;
         do{
             rip_up_candidate = nullptr;
@@ -61,6 +70,9 @@ void Router::routing(Net &n, int source_index, int sink_index){
     }
     for(auto rup : rip_up_pair){
         const auto &[current_net, souce_index, sink_index] = rup;
+        if(current_net->id == 102){
+
+        }
         this->routing(*current_net, souce_index, sink_index);
     }
 }
@@ -71,10 +83,10 @@ void Router::main(){
         for(auto &tpn : n.two_pins_net){
             this->routing(n, tpn.first, tpn.second);
             // reset history cost
-            for(unsigned i = 0; i < grid->history_cost.size(); i++){
-                for(unsigned j = 0; j < grid->history_cost.at(i).size(); j++){
-                    for(unsigned k = 0; k < grid->history_cost.at(i).at(j).size(); k++){
-                        grid->history_cost.at(i).at(j).at(k) = 0.0;
+            for(unsigned i = 0; i < grid->history.size(); i++){
+                for(unsigned j = 0; j < grid->history.at(i).size(); j++){
+                    for(unsigned k = 0; k < grid->history.at(i).at(j).size(); k++){
+                        grid->history.at(i).at(j).at(k) = 0.0;
                     }
                 }
             }

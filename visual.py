@@ -35,6 +35,10 @@ for count, file in enumerate(file_list):
         line = f.readline().split()
         wl = int(line[1])
 
+        #read total cost
+        line = f.readline().split()
+        cost = int(line[1])
+
         #read obstacles
         line = f.readline().split()
         obs_num = int(line[1])
@@ -123,7 +127,7 @@ for count, file in enumerate(file_list):
             ax.add_patch(rect)
         plt.xlim([0,width])
         plt.ylim([0,height])
-        plt.title(f"{file_name} WL = {wl}")
+        plt.title(f"{file_name} WL = {wl}, cost = {cost}")
         plt.savefig(f"./{out_path}/{file_name}.png", dpi=300)
         plt.close(fig)
         print(f"Success create ./{out_path}/{file_name}.png")
