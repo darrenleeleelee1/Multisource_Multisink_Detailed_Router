@@ -18,6 +18,7 @@ void Router::routing(Net &n, int source_index, int sink_index){
     }
     if(n.tree->find(source_index) == n.tree->find(sink_index)) return;
     if(!tree2treeMazeRouting(&n, n.tree->at(source_index), n.tree->at(sink_index))){
+        num_of_reroute++;
         Path tmp_path = tree2treeMazeRouting(pin_and_obstacle_grid, &n, n.tree->at(source_index), n.tree->at(sink_index));
         addHistoryCost(&tmp_path);
         // debug

@@ -2,7 +2,8 @@
 CC = g++
 
 # Specify the flags to use during compilation
-CFLAGS = -std=c++17 -Wall -O0 -g
+# CFLAGS = -std=c++17 -Wall -O0 -g
+CFLAGS = -std=c++17 -Wall -O3
 
 # Specify the path to the project's source files
 SRC_DIR = src
@@ -31,6 +32,7 @@ OBJ_FILES = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
 # Generate the list of header files to include
 HEADER_FILES = $(patsubst $(SRC_DIR)/%.cpp,$(INCLUDE_DIR)/%.hpp,$(SRC_FILES))
 
+.PHONY: clean clean_out
 # The default target of the makefile
 all: $(EXE)
 
@@ -45,7 +47,7 @@ $(OBJ_DIR)/%.o: %.cpp
 $(OBJ_DIR)/main.o: main.cpp
 	$(CC) $(CFLAGS) $(INCLUDE_PATHS) -c -o $@ $<
 # A rule to clean up the project directory
-.PHONY: clean
+
 clean:
 	rm -f $(OBJ_DIR)/*.o $(EXE)
 clean_out:

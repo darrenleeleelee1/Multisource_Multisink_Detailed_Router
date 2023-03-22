@@ -473,29 +473,7 @@ std::pair<int, int> ripUpPaths(Grid *grid, Path *rip_up_candidate, Tree *updated
     }
     // Find the rip_up_candidate->end_pin at which tree
     int reroute_second_subtree = -1;
-    // debug
-    // roots.clear();
-    // int tcnt = 1;
-    // for(unsigned i = 0; i < updated_tree->coordinate2index.size(); i++){
-    //     int root = updated_tree->find(i);
-    //     if(roots.count(root)) continue;
-    //     roots.insert(root);
-    //     std::cout << "Tee#" << tcnt++ << " ";
-    //     std::cout << "Net#" << net_id << " :\n";
-    //     int pcnt = 1;
-    //     for(auto e : updated_tree->at(root)->paths){
-    //         std::cout << pcnt++ << ":" << e->start_pin.toString() << " " << e->end_pin.toString() << "\n";
-    //         for(auto s : e->segments){
-    //             std::cout << s->toString() << ", ";
-    //         }
-    //         std::cout << "\n";
-    //     }
-    //     std::cout << "\n";
-    // }
-    // if(rip_up_candidate->end_pin == Coordinate3D{30, 10, 0}){
-    //     int debug = 0;
-    // }
-    //debug
+    
     roots.clear();
     for(unsigned i = 0; i < updated_tree->coordinate2index.size(); i++){
         int root = updated_tree->find(i);
@@ -537,7 +515,7 @@ void Router::twoPinNetDecomposition(){
 bool Router::tree2treeMazeRouting(Net *net, Subtree *source, Subtree *sink){
     /* Declaring */
     bool success = true;
-    Vertex *current;
+    Vertex *current = nullptr;
     auto comp = [](const Vertex *lhs, const Vertex *rhs) {return lhs->distance > rhs->distance;};
     std::priority_queue<Vertex*, std::vector<Vertex*>, decltype(comp)> pq(comp);
     /* Initialize the soruce and sink verteices */
@@ -603,6 +581,9 @@ bool Router::tree2treeMazeRouting(Net *net, Subtree *source, Subtree *sink){
     }
     /* Backtracking */
     // Failed tree2tree routing
+    if(current == nullptr){
+        throw std::runtime_error("No step was taken");
+    }
     if(!this->grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->is_sink){
         std::cout << "Net#" << net->id << " " << source->showPins() << "- " << sink->showPins() << " need reroute\n";
         success = false;
@@ -764,7 +745,7 @@ bool Router::tree2treeMazeRouting(Net *net, Subtree *source, Subtree *sink){
  */
 Path Router::tree2treeMazeRouting(Grid *tmp_grid, Net *net, Subtree *source, Subtree *sink){
     /* Declaring */
-    Vertex *current;
+    Vertex *current = nullptr;
     auto comp = [](const Vertex *lhs, const Vertex *rhs) {return lhs->distance > rhs->distance;};
     std::priority_queue<Vertex*, std::vector<Vertex*>, decltype(comp)> pq(comp);
     /* Initialize the soruce and sink verteices */
@@ -831,6 +812,9 @@ Path Router::tree2treeMazeRouting(Grid *tmp_grid, Net *net, Subtree *source, Sub
     }
     /* Backtracking */
     // Failed tree2tree routing
+    if(current == nullptr){
+        throw std::runtime_error("No step was taken");
+    }
     if(!tmp_grid->graph.at(current->coordinate.x).at(current->coordinate.y).at(current->coordinate.z)->is_sink){
         throw std::runtime_error("Error: reroute Net#" + std::to_string(net->id) + " " + source->showPins() + "- " + sink->showPins() + "\n");
     }

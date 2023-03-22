@@ -192,6 +192,7 @@ public:
 		Coordinate3D sp = start_pin;
 		unsigned swap_index;
 		for(unsigned i = 0; i < segments.size(); i++){
+			swap_index = i;
 			for(unsigned j = i; j < segments.size(); j++){
 				if(Coordinate2D{sp} == Coordinate2D{segments.at(j)->startPoint()} || Coordinate2D{sp} == Coordinate2D{segments.at(j)->endPoint()}){
 					swap_index = j;

@@ -4,12 +4,11 @@
 ![workflow](https://github.com/darrenleeleelee1/Router/actions/workflows/memory_leak.yml/badge.svg?event=push)
 
 ## Build and Execute
-* Build   : `make`
+* Build   : `make` or `./sh/test.sh -b`
     * need `./obj` directory
-* Execute : `./router <testcase> <output>`
-* Draw    : ` python3 visual.py --dir <output>`
-* Run all and draw : `./sh/run_all.sh [--draw]`
-    * need `./out` directory  
+* Execute : `./router <testcase> <output>` or `./sh/test.sh -r`
+* Draw    : `./visual.py -i <result directory> -o <draw directory>` or `./sh/test.sh -d`
+* Verify  : `./verifier <output>` or `./sh/test.sh -v`
 
 
 ## Flow

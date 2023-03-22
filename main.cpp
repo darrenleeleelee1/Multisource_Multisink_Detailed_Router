@@ -15,6 +15,7 @@ int main(int argc, char const *argv[]){
     std::cout << "Routing\n"; timer.setShortTerm();
     Router router(&layout);
     router.main();
+    std::cout << "Reroute number: " << router.num_of_reroute << "\n";
     std::cout << "Routing time: " << timer.getShortTerm() << "\n";
     
     std::cout << "Write Layout\n"; timer.setShortTerm();

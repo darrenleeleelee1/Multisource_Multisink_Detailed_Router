@@ -2,7 +2,10 @@
 obj/
 out/
 draw/
-compare_case/
-pass_small_case/
+easy50x50/
+easy200x200/
+hard50x50/
+hard200x200/
+hard500x500/
 small_reroute_case/
 router
