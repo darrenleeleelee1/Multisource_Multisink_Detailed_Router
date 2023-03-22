@@ -21,13 +21,6 @@ void Router::routing(Net &n, int source_index, int sink_index){
         num_of_reroute++;
         Path tmp_path = tree2treeMazeRouting(pin_and_obstacle_grid, &n, n.tree->at(source_index), n.tree->at(sink_index));
         addHistoryCost(&tmp_path);
-        // debug
-        std::cout << "Net#" << n.id << "\n";
-        for(auto i : tmp_path.segments){
-            std::cout << i->startPoint().toString() << "-" << i->endPoint().toString() << "\n";
-        }
-        std::cout << "\n";
-        // debug
         Path *rip_up_candidate = nullptr;
         do{
             rip_up_candidate = nullptr;
@@ -71,9 +64,6 @@ void Router::routing(Net &n, int source_index, int sink_index){
     }
     for(auto rup : rip_up_pair){
         const auto &[current_net, souce_index, sink_index] = rup;
-        if(current_net->id == 102){
-
-        }
         this->routing(*current_net, souce_index, sink_index);
     }
 }
