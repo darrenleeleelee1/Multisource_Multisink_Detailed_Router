@@ -3,10 +3,8 @@
 #include <tuple>
 #include <deque>
 #include "router.hpp"
-// debug
-int gcnt = 0;
-// debug
 void Router::routing(Net &n, int source_index, int sink_index){
+    // std::cout << "Routing Net#" << n.id << "\n";
     std::deque<std::tuple<Net*, int, int>> rip_up_pair;
     if(n.tree->find(source_index) == n.tree->find(sink_index)){
         for(unsigned i = 0; i < n.tree->parents.size(); i++){
@@ -30,7 +28,7 @@ void Router::routing(Net &n, int source_index, int sink_index){
                         if(grid->graph.at(i).at(s->getY()).at(s->z)->cur_paths.size() > 0){
                             rip_up_candidate = grid->graph.at(i).at(s->getY()).at(s->z)->cur_paths.at(0);
                             if(rip_up_candidate != nullptr){
-                                if(rip_up_candidate != nullptr) addHistoryCost(rip_up_candidate);
+                                // if(rip_up_candidate != nullptr) addHistoryCost(rip_up_candidate);
                                 auto &current_net = layout->netlist.at(grid->graph.at(i).at(s->getY()).at(s->z)->obstacle);
                                 const auto &[souce_index, sink_index] = ripUpPaths(grid, rip_up_candidate, current_net.tree);
                                 rip_up_pair.push_back(std::make_tuple(&current_net, souce_index, sink_index));
@@ -44,7 +42,7 @@ void Router::routing(Net &n, int source_index, int sink_index){
                         if(grid->graph.at(s->getX()).at(i).at(s->z)->cur_paths.size() > 0){
                             rip_up_candidate = grid->graph.at(s->getX()).at(i).at(s->z)->cur_paths.at(0);
                             if(rip_up_candidate != nullptr){
-                                if(rip_up_candidate != nullptr) addHistoryCost(rip_up_candidate);
+                                // if(rip_up_candidate != nullptr) addHistoryCost(rip_up_candidate);
                                 auto &current_net = layout->netlist.at(grid->graph.at(s->getX()).at(i).at(s->z)->obstacle);
                                 const auto &[souce_index, sink_index] = ripUpPaths(grid, rip_up_candidate, current_net.tree);
                                 rip_up_pair.push_back(std::make_tuple(&current_net, souce_index, sink_index));

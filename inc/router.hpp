@@ -9,8 +9,8 @@ public:
     Grid *grid;
     Grid *pin_and_obstacle_grid;
     static const std::vector<std::vector<Coordinate3D>> move_orientation;
-    double history_cost = 0.1;
-    unsigned num_of_reroute;
+    double history_cost = 1; // history cost weight
+    unsigned num_of_reroute; // for counting rerouting number
     Router() {}
     Router(Layout *l) {
         this->layout = l;
