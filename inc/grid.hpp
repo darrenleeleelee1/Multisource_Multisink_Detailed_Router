@@ -111,7 +111,7 @@ public:
         }
     }
     void setDistanceZero(Segment seg){
-        if(seg.z == 0){
+        if(seg.getLayer() == 0){
             for(int i = std::min(seg.x, seg.neighbor); i <= std::max(seg.x, seg.neighbor); i++){
                 this->graph.at(i).at(seg.y).at(seg.z)->distance = 0;
             }
@@ -128,7 +128,7 @@ public:
         }
     }
     void setObstacles(int net_id, Segment seg){
-        if(seg.z == 0){
+        if(seg.getLayer() == 0){
             for(int i = std::min(seg.x, seg.neighbor); i <= std::max(seg.x, seg.neighbor); i++){
                 this->graph.at(i).at(seg.y).at(seg.z)->obstacle = net_id;
             }
@@ -168,7 +168,7 @@ public:
         }
     }
     void resetObstacles(Segment seg){
-        if(seg.z == 0){
+        if(seg.getLayer() == 0){
             for(int i = std::min(seg.x, seg.neighbor); i <= std::max(seg.x, seg.neighbor); i++){
                 this->graph.at(i).at(seg.y).at(seg.z)->obstacle = -1;
             }
@@ -188,7 +188,7 @@ public:
         }
     }
     void setSinks(Segment seg){
-        if(seg.z == 0){
+        if(seg.getLayer() == 0){
             for(int i = std::min(seg.x, seg.neighbor); i <= std::max(seg.x, seg.neighbor); i++){
                 this->graph.at(i).at(seg.y).at(seg.z)->is_sink = true;
             }
@@ -213,7 +213,7 @@ public:
         }
     }
     void resetSinks(Segment seg){
-        if(seg.z == 0){
+        if(seg.getLayer() == 0){
             for(int i = std::min(seg.x, seg.neighbor); i <= std::max(seg.x, seg.neighbor); i++){
                 this->graph.at(i).at(seg.y).at(seg.z)->is_sink = false;
             }

@@ -95,8 +95,9 @@ public:
 	int x, y, neighbor;
 	int z; // 0 for horizon, 1 for verticle
 	Segment(){}
-	Segment(int _z, int _x, int _y, int nei) : z(_z){
-		if(_z == 0){
+	Segment(int _z, int _x, int _y, int nei) {
+		this->z = _z;
+		if(getLayer() == 0){
 			this->x = std::min(_x, nei);
 			this->y = _y;
 			this->neighbor = std::max(_x, nei);
@@ -107,65 +108,65 @@ public:
 			this->neighbor = std::max(_y, nei);
 		}
 	}
+	int getLayer(){
+		return this->z % 2;
+	}
 	int getX(){
-		if(this->z == 0) return std::min(this->x, this->neighbor);
-		else return this->x;
+		if(getLayer() == 0) return std::min(x, neighbor);
+		else return x;
 	}
 	int getY(){
-		if(this->z == 1) return std::min(this->y, this->neighbor);
-		else return this->y;
+		if(getLayer() == 1) return std::min(y, neighbor);
+		else return y;
 	}
 	int getNeighbor(){
-		if(this->z == 0) return std::max(this->x, this->neighbor);
-		else if(this->z == 1) return std::max(this->y, this->neighbor);
-		else return this->neighbor;
+		if(getLayer() == 0) return std::max(x, neighbor);
+		else return std::max(y, neighbor);
 	}
 	Coordinate3D startPoint(){
-		if(this->z == 0) return Coordinate3D{this->getX(), this->getY(), this->z};
-		else return Coordinate3D{this->getX(), this->getY(), this->z};
+		if(getLayer() == 0) return Coordinate3D{getX(), getY(), z};
+		else return Coordinate3D{getX(), getY(), z};
 	}
 	Coordinate3D endPoint(){
-		if(this->z == 0) return Coordinate3D{this->getNeighbor(), this->getY(), this->z};
-		else return Coordinate3D{this->getX(), this->getNeighbor(), this->z};
+		if(getLayer() == 0) return Coordinate3D{getNeighbor(), getY(), z};
+		else return Coordinate3D{getX(), getNeighbor(), z};
 	}
 	std::string toString(){
-		if(this->z == 0) {
-			return "(" + std::to_string(this->getX()) + "," + std::to_string(this->getY()) + "," + std::to_string(this->z) + ")"
-					+ "-(" + std::to_string(this->getNeighbor()) + "," + std::to_string(this->getY()) + "," + std::to_string(this->z) + ")";
+		if(getLayer() == 0) {
+			return "(" + std::to_string(getX()) + "," + std::to_string(getY()) + "," + std::to_string(z) + ")"
+					+ "-(" + std::to_string(getNeighbor()) + "," + std::to_string(getY()) + "," + std::to_string(z) + ")";
 		}
 		else{
-			return "(" + std::to_string(this->getX()) + "," + std::to_string(this->getY()) + "," + std::to_string(this->z) + ")"
-					+ "-(" + std::to_string(this->getX()) + "," + std::to_string(this->getNeighbor()) + "," + std::to_string(this->z) + ")";
+			return "(" + std::to_string(getX()) + "," + std::to_string(getY()) + "," + std::to_string(z) + ")"
+					+ "-(" + std::to_string(getX()) + "," + std::to_string(getNeighbor()) + "," + std::to_string(z) + ")";
 		}
 	}
 	bool colinear(Coordinate3D point){
-		if(this->z == 0){
-			if(this->getY() != point.y) return false;
-			if(this->getX() <= point.x && point.x <= this->getNeighbor()) return true;
+		if(getLayer() == 0){
+			if(getY() != point.y) return false;
+			if(getX() <= point.x && point.x <= getNeighbor()) return true;
 		}
-		else if(this->z == 1){
-			if(this->getX() != point.x) return false;
-			if(this->getY() <= point.y && point.y <= this->getNeighbor()) return true;
+		else{
+			if(getX() != point.x) return false;
+			if(getY() <= point.y && point.y <= getNeighbor()) return true;
 		}
 		return false;
 	}
 	int getWirelength(){
-		if(z == 0){
-			return std::max(this->x, this->neighbor) - std::min(this->x, this->neighbor);
+		if(getLayer() == 0){
+			return std::max(x, neighbor) - std::min(x, neighbor);
 		}
-		else if(z == 1){
-			return std::max(this->y, this->neighbor) - std::min(this->y, this->neighbor);
+		else{
+			return std::max(y, neighbor) - std::min(y, neighbor);
 		}
-		return 0;
 	}
 	double getCost(double horizontal_cost, double vertical_cost){
-		if(z == 0){
-			return (std::max(this->x, this->neighbor) - std::min(this->x, this->neighbor)) * horizontal_cost;
+		if(getLayer() == 0){
+			return (std::max(x, neighbor) - std::min(x, neighbor)) * horizontal_cost;
 		}
-		else if(z == 1){
-			return (std::max(this->y, this->neighbor) - std::min(this->y, this->neighbor)) * vertical_cost;
+		else{
+			return (std::max(y, neighbor) - std::min(y, neighbor)) * vertical_cost;
 		}
-		return 0;
 	}
 };
 class Path{

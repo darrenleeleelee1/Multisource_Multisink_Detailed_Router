@@ -4,7 +4,7 @@
 #include <deque>
 #include "router.hpp"
 void Router::routing(Net &n, int source_index, int sink_index){
-    // std::cout << "Routing Net#" << n.id << "\n";
+    std::cout << "Routing Net#" << n.id << "\n";
     std::deque<std::tuple<Net*, int, int>> rip_up_pair;
     if(n.tree->find(source_index) == n.tree->find(sink_index)){
         for(unsigned i = 0; i < n.tree->parents.size(); i++){

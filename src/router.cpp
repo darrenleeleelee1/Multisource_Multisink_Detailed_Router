@@ -157,7 +157,7 @@ bool splitPaths(Grid *grid, Coordinate3D point, Path *split_candidate, std::vect
                     if(!(Coordinate2D{point} == Coordinate2D{s->startPoint()} 
                             || Coordinate2D{point} == Coordinate2D{s->endPoint()})){
                         Segment *new_segment = nullptr;
-                        if(s->z == 0){
+                        if(s->getLayer() == 0){
                             new_segment = new Segment(s->z, start_point.x, s->y, point.x);
                             if(s->neighbor == start_point.x) s->neighbor = point.x;
                             else s->x = point.x;
@@ -182,9 +182,7 @@ bool splitPaths(Grid *grid, Coordinate3D point, Path *split_candidate, std::vect
                     else{
                         remove_list.push_back(s);
                         new_path->segments.push_back(s);
-                        start_point = ((Coordinate2D{s->startPoint()} == Coordinate2D{start_point}) ? Coordinate3D(s->endPoint().x, s->endPoint().y, (s->endPoint().z + 1) % 2) 
-                                    : Coordinate3D(s->startPoint().x, s->startPoint().y, (s->startPoint().z + 1) % 2));
-                        new_path->end_pin = start_point;
+                        new_path->end_pin = point;
                         p->start_pin = new_path->end_pin;
                         complete_path = true;
                     }
@@ -193,8 +191,18 @@ bool splitPaths(Grid *grid, Coordinate3D point, Path *split_candidate, std::vect
                 else{
                     remove_list.push_back(s);
                     new_path->segments.push_back(s);
-                    start_point = ((s->startPoint().x == start_point.x && s->startPoint().y == start_point.y) ? Coordinate3D(s->endPoint().x, s->endPoint().y, (s->endPoint().z + 1) % 2) 
-                                : Coordinate3D(s->startPoint().x, s->startPoint().y, (s->startPoint().z + 1) % 2));
+                    // Move to this segments tail, for find the next segment head
+                    start_point = ((Coordinate2D{s->startPoint()} == Coordinate2D{start_point}) ? Coordinate3D(s->endPoint().x, s->endPoint().y, (s->endPoint().z + 1) % 2) 
+                                    : Coordinate3D(s->startPoint().x, s->startPoint().y, (s->startPoint().z + 1) % 2));
+                    // Find the next segment head
+                    if(j + 1 < p->segments.size()){
+                        auto &tmp = p->segments.at(j+1);
+                        start_point = (Coordinate2D{tmp->startPoint()} == Coordinate2D{start_point}) ? tmp->startPoint() : tmp->endPoint();
+                    }
+                    else{
+                        throw std::runtime_error("Last segment should not reach here");
+                        start_point = (Coordinate2D{s->startPoint()} == Coordinate2D{start_point}) ? s->endPoint() : s->startPoint(); 
+                    }
                 }
             }
             for (auto it = p->segments.begin(); it != p->segments.end(); ) {
@@ -535,7 +543,7 @@ bool Router::tree2treeMazeRouting(Net *net, Subtree *source, Subtree *sink){
     }
     for(auto &p : source->paths){
         for(auto &s : p->segments){
-            if(s->z == 0){
+            if((s->z % 2) == 0){
                 for(int i = std::min(s->x, s->neighbor); i <= std::max(s->x, s->neighbor); i++){
                     if(this->grid->graph.at(i).at(s->y).at(s->z)->distance != 0){
                         pq.push(this->grid->graph.at(i).at(s->y).at(s->z));
@@ -565,7 +573,7 @@ bool Router::tree2treeMazeRouting(Net *net, Subtree *source, Subtree *sink){
             break;
         }
         // Enumerate 4 directions
-        int cur_z = current->coordinate.z;
+        int cur_z = current->coordinate.z % 2;
         for(unsigned i = 0; i < move_orientation.at(cur_z).size(); i++){
             if(outOfBound(Coordinate3D{current->coordinate.x + move_orientation.at(cur_z).at(i).x, current->coordinate.y + move_orientation.at(cur_z).at(i).y, cur_z + move_orientation.at(cur_z).at(i).z})) continue;
             if(this->grid->graph.at(current->coordinate.x + move_orientation.at(cur_z).at(i).x).at(current->coordinate.y + move_orientation.at(cur_z).at(i).y).at(cur_z + move_orientation.at(cur_z).at(i).z)->isObstacle()
@@ -617,8 +625,6 @@ bool Router::tree2treeMazeRouting(Net *net, Subtree *source, Subtree *sink){
                 tmp_seg->x = current->coordinate.x;
                 tmp_seg->y = current->coordinate.y;
             }
-            
-            
             current = current->prevertex;
         }
         if(tmp_seg == nullptr){
