@@ -3,6 +3,8 @@
 ![workflow](https://github.com/darrenleeleelee1/Router/actions/workflows/verifier.yml/badge.svg?event=push)
 ![workflow](https://github.com/darrenleeleelee1/Router/actions/workflows/memory_leak.yml/badge.svg?event=push)
 
+![](./assets/test1_rip_up_and_reroute.gif)
+
 ## Build and Execute
 * Build   : `make` or `./sh/test.sh -b`
     * need `./obj` directory
